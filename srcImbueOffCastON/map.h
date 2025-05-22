@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef FS_MAP_H
-#define FS_MAP_H
+#ifndef FS_MAP_H_E3953D57C058461F856F5221D359DAFA
+#define FS_MAP_H_E3953D57C058461F856F5221D359DAFA
 
 #include "position.h"
 #include "item.h"
@@ -39,7 +39,6 @@ class Map;
 static constexpr int32_t MAP_MAX_LAYERS = 16;
 
 struct FindPathParams;
-
 struct AStarNode {
 	AStarNode* parent;
 	int_fast32_t f;
@@ -53,24 +52,25 @@ static constexpr int32_t MAP_DIAGONALWALKCOST = 25;
 
 class AStarNodes
 {
-public:
-	AStarNodes(uint32_t x, uint32_t y);
+	public:
+		AStarNodes(uint32_t x, uint32_t y);
 
-	AStarNode* createOpenNode(AStarNode* parent, uint32_t x, uint32_t y, int_fast32_t f);
-	AStarNode* getBestNode();
-	void closeNode(AStarNode* node);
-	void openNode(AStarNode* node);
-	int_fast32_t getClosedNodes() const;
-	AStarNode* getNodeByPosition(uint32_t x, uint32_t y);
-	
-	static int_fast32_t getMapWalkCost(AStarNode* node, const Position& neighborPos);
-	static int_fast32_t getTileWalkCost(const Creature& creature, const Tile* tile);
-private:
-	AStarNode nodes[MAX_NODES];
-	bool openNodes[MAX_NODES];
-	std::unordered_map<uint32_t, AStarNode*> nodeTable;
-	size_t curNode;
-	int_fast32_t closedNodes;
+		AStarNode* createOpenNode(AStarNode* parent, uint32_t x, uint32_t y, int_fast32_t f);
+		AStarNode* getBestNode();
+		void closeNode(AStarNode* node);
+		void openNode(AStarNode* node);
+		int_fast32_t getClosedNodes() const;
+		AStarNode* getNodeByPosition(uint32_t x, uint32_t y);
+
+		static int_fast32_t getMapWalkCost(AStarNode* node, const Position& neighborPos);
+		static int_fast32_t getTileWalkCost(const Creature& creature, const Tile* tile);
+
+	private:
+		AStarNode nodes[MAX_NODES];
+		bool openNodes[MAX_NODES];
+		std::unordered_map<uint32_t, AStarNode*> nodeTable;
+		size_t curNode;
+		int_fast32_t closedNodes;
 };
 
 using SpectatorCache = std::map<Position, SpectatorVec>;
@@ -265,7 +265,7 @@ class Map
 		  */
 		bool isSightClear(const Position& fromPos, const Position& toPos, bool sameFloor = false) const;
 		bool checkSightLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint8_t z) const;
-		
+
 		const Tile* canWalkTo(const Creature& creature, const Position& pos) const;
 
 		bool getPathMatching(const Creature& creature, std::vector<Direction>& dirList,

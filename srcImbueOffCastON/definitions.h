@@ -17,12 +17,12 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef FS_DEFINITIONS_H
-#define FS_DEFINITIONS_H
+#ifndef FS_DEFINITIONS_H_877452FEC245450C9F96B8FD268D8963
+#define FS_DEFINITIONS_H_877452FEC245450C9F96B8FD268D8963
 
-static constexpr auto STATUS_SERVER_NAME = "FABIX TFS X";
-static constexpr auto STATUS_SERVER_VERSION = "1.7+";
-static constexpr auto STATUS_SERVER_DEVELOPERS = "Fabian Marzan";
+static constexpr auto STATUS_SERVER_NAME = "The Forgotten Server";
+static constexpr auto STATUS_SERVER_VERSION = "1.5 (Nekiro's 8.60 downgrade)";
+static constexpr auto STATUS_SERVER_DEVELOPERS = "Mark Samman";
 
 static constexpr auto CLIENT_VERSION_MIN = 860;
 static constexpr auto CLIENT_VERSION_MAX = 860;

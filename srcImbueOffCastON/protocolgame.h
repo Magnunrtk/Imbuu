@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef FS_PROTOCOLGAME_H
-#define FS_PROTOCOLGAME_H
+#ifndef FS_PROTOCOLGAME_H_FACA2A2D1A9348B78E8FD7E8003EBB87
+#define FS_PROTOCOLGAME_H_FACA2A2D1A9348B78E8FD7E8003EBB87
 
 #include "protocol.h"
 #include "chat.h"
@@ -138,18 +138,13 @@ class ProtocolGame final : public Protocol
 		void parsePassPartyLeadership(NetworkMessage& msg);
 		void parseEnableSharedPartyExperience(NetworkMessage& msg);
 		
+		void parseToggleMount(NetworkMessage& msg);
+		
 		void parseModalWindowAnswer(NetworkMessage& msg);
 		
 		//trade methods
 		void parseRequestTrade(NetworkMessage& msg);
 		void parseLookInTrade(NetworkMessage& msg);
-		
-		//market methods
-		void parseMarketLeave();
-		void parseMarketBrowse(NetworkMessage& msg);
-		void parseMarketCreateOffer(NetworkMessage& msg);
-		void parseMarketCancelOffer(NetworkMessage& msg);
-		void parseMarketAcceptOffer(NetworkMessage& msg);
 
 		//VIP methods
 		void parseAddVip(NetworkMessage& msg);
@@ -181,7 +176,7 @@ class ProtocolGame final : public Protocol
 		void sendCreatureHealth(const Creature* creature);
 		void sendSkills();
 		void sendPing();
-		void sendCreatureTurn(const Creature* creature, uint32_t stackpos);
+		void sendCreatureTurn(const Creature* creature, uint32_t stackPos);
 		void sendCreatureSay(const Creature* creature, SpeakClasses type, const std::string& text, const Position* pos = nullptr);
 
 		void sendCancelWalk();
@@ -202,13 +197,6 @@ class ProtocolGame final : public Protocol
 		void sendShop(const ShopInfoList& itemList);
 		void sendCloseShop();
 		void sendSaleItemList(const std::list<ShopInfo>& shop);
-		void sendMarketEnter();
-		void sendMarketBrowseItem(uint16_t itemId, const MarketOfferList& buyOffers, const MarketOfferList& sellOffers);
-		void sendMarketAcceptOffer(const MarketOfferEx& offer);
-		void sendMarketBrowseOwnOffers(const MarketOfferList& buyOffers, const MarketOfferList& sellOffers);
-		void sendMarketCancelOffer(const MarketOfferEx& offer);
-		void sendMarketBrowseOwnHistory(const HistoryMarketOfferList& buyOffers, const HistoryMarketOfferList& sellOffers);
-		void sendMarketDetail(uint16_t itemId);
 		void sendTradeItemRequest(const std::string& traderName, const Item* item, bool ack);
 		void sendCloseTrade();
 

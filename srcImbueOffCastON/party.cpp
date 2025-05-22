@@ -122,11 +122,6 @@ bool Party::leaveParty(Player* player)
 	player->sendCreatureSkull(player);
 	player->sendPlayerPartyIcons(leader);
 
-	// remove pending invitation icons from the screen
-	for (Player* invitee : inviteList) {
-		player->sendCreatureShield(invitee);
-	}
-
 	player->sendTextMessage(MESSAGE_INFO_DESCR, "You have left the party.");
 
 	updateSharedExperience();
@@ -186,29 +181,21 @@ bool Party::passPartyLeadership(Player* player, bool forceRemove /* = false*/)
 
 bool Party::joinParty(Player& player)
 {
-
-	// check if lua scripts allow the player to join
 	if (!g_events->eventPartyOnJoin(this, &player)) {
 		return false;
 	}
 
-	// first player accepted the invitation
-	// the party gets officially formed
-	// the leader can no longer take invitations from others
-	if (memberList.empty()) {
-		leader->clearPartyInvitations();
+	auto it = std::find(inviteList.begin(), inviteList.end(), &player);
+	if (it == inviteList.end()) {
+		return false;
 	}
 
-   // add player to the party
-	memberList.push_back(&player);
-	player.setParty(this);
+	inviteList.erase(it);
 
 	broadcastPartyMessage(MESSAGE_INFO_DESCR, fmt::format("{:s} has joined the party.", player.getName()));
 
-	// remove player pending invitations to this and other parties
-	player.clearPartyInvitations();
+	player.setParty(this);
 
-   // update player icon on the screen
 	g_game.updatePlayerShield(&player);
 
 	for (Player* member : memberList) {
@@ -216,17 +203,11 @@ bool Party::joinParty(Player& player)
 		player.sendPlayerPartyIcons(member);
 	}
 
-   // update player-leader party icons
+	player.sendCreatureSkull(&player);
 	leader->sendCreatureSkull(&player);
 	player.sendPlayerPartyIcons(leader);
 
-  // update player own skull
-	player.sendCreatureSkull(&player);
-
-	// show the new member who else is invited
-	for (Player* invitee : inviteList) {
-		player.sendCreatureShield(invitee);
-	}
+	memberList.push_back(&player);
 
 	player.removePartyInvitation(this);
 	updateSharedExperience();
@@ -243,9 +224,7 @@ bool Party::removeInvite(Player& player, bool removeFromPlayer/* = true*/)
 		return false;
 	}
 
-	// add player to the party
-	memberList.push_back(&player);
-	player.setParty(this);
+	inviteList.erase(it);
 
 	leader->sendCreatureShield(&player);
 	player.sendCreatureShield(leader);
@@ -286,18 +265,12 @@ bool Party::invitePlayer(Player& player)
 		leader->sendTextMessage(MESSAGE_INFO_DESCR, fmt::format("{:s} has been invited.", player.getName()));
 	}
 
-    // add player to invite lists
 	inviteList.push_back(&player);
-	player.addPartyInvitation(this);
 
-   // update leader-invitee party status
 	leader->sendCreatureShield(&player);
 	player.sendCreatureShield(leader);
 
-	// update the invitation status for other members
-	for (Player* member : memberList) {
-		member->sendCreatureShield(&player);
-	}
+	player.addPartyInvitation(this);
 
 	player.sendTextMessage(MESSAGE_INFO_DESCR, fmt::format("{:s} has invited you to {:s} party.", leader->getName(), leader->getSex() == PLAYERSEX_FEMALE ? "her" : "his"));
 	return true;

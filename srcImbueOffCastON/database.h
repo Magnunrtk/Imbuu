@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef FS_DATABASE_H
-#define FS_DATABASE_H
+#ifndef FS_DATABASE_H_A484B0CDFDE542838F506DCE3D40C693
+#define FS_DATABASE_H_A484B0CDFDE542838F506DCE3D40C693
 
 #include <boost/lexical_cast.hpp>
 
@@ -132,8 +132,6 @@ class Database
 		MYSQL* handle = nullptr;
 		std::recursive_mutex databaseLock;
 		uint64_t maxPacketSize = 1048576;
-		// Do not retry queries if we are in the middle of a transaction
-		bool retryQueries = true;
 
 	friend class DBTransaction;
 };

@@ -42,6 +42,7 @@ const std::unordered_map<std::string, ItemParseAttributes_t> ItemParseAttributes
 	{"attackspeed", ITEM_PARSE_ATTACK_SPEED},
 	{"classification", ITEM_PARSE_CLASSIFICATION},
 	{"tier", ITEM_PARSE_TIER},
+	{"imbuementslots", ITEM_PARSE_IMBUEMENTSLOTS},
 	{"rotateto", ITEM_PARSE_ROTATETO},
 	{"moveable", ITEM_PARSE_MOVEABLE},
 	{"movable", ITEM_PARSE_MOVEABLE},
@@ -203,7 +204,6 @@ const std::unordered_map<std::string, ItemParseAttributes_t> ItemParseAttributes
 	{"allowdistread", ITEM_PARSE_ALLOWDISTREAD},
 	{"storeitem", ITEM_PARSE_STOREITEM},
 	{"worth", ITEM_PARSE_WORTH},
-	{"imbuementslots", 	ITEM_PARSE_IMBUEMENT_SLOT},
 };
 
 const std::unordered_map<std::string, ItemTypes_t> ItemTypesMap = {
@@ -721,11 +721,11 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint16_t id)
 					break;
 				}
 				
-				case ITEM_PARSE_IMBUEMENT_SLOT: {
-					it.imbuementslots = pugi::cast<int16_t>(valueAttribute.value());
+				case ITEM_PARSE_IMBUEMENTSLOTS: {
+					it.imbuementslots = pugi::cast<int32_t>(valueAttribute.value());
 					break;
 				}
-				
+
 				case ITEM_PARSE_ROTATETO: {
 					it.rotateTo = pugi::cast<int32_t>(valueAttribute.value());
 					break;

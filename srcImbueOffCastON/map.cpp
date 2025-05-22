@@ -271,11 +271,6 @@ bool Map::placeCreature(const Position& centerPos, Creature* creature, bool exte
 void Map::moveCreature(Creature& creature, Tile& newTile, bool forceTeleport/* = false*/)
 {
 	Tile& oldTile = *creature.getTile();
-	
-	// If the tile does not have the creature it means that the creature is ready for elimination, we skip the move.
-	if (!oldTile.hasCreature(&creature)) {
-		return;
-	}
 
 	Position oldPos = oldTile.getPosition();
 	Position newPos = newTile.getPosition();
@@ -524,7 +519,7 @@ bool Map::isTileClear(uint16_t x, uint16_t y, uint8_t z, bool blockFloor /*= fal
 	if (blockFloor && tile->getGround()) {
 		return false;
 	}
-	
+
 	return !tile->hasProperty(CONST_PROP_BLOCKPROJECTILE);
 }
 
@@ -571,30 +566,37 @@ bool Map::checkSightLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uin
     if (x0 == x1 && y0==y1) {
         return true;
     }
-	
+
     Position start(x0,y0,z);
     Position destination(x1,y1,z);
+
     const int8_t mx = start.x < destination.x ? 1 : start.x == destination.x ? 0
         : -1;
     const int8_t my = start.y < destination.y ? 1 : start.y == destination.y ? 0
         : -1;
+
     int32_t A = Position::getOffsetY(destination, start);
     int32_t B = Position::getOffsetX(start, destination);
     int32_t C = -(A * destination.x + B * destination.y);
+
     while (start.x != destination.x || start.y != destination.y) {
         int32_t move_hor = std::abs(A * (start.x + mx) + B * (start.y) + C);
         int32_t move_ver = std::abs(A * (start.x) + B * (start.y + my) + C);
         int32_t move_cross = std::abs(A * (start.x + mx) + B * (start.y + my) + C);
+
         if (start.y != destination.y && (start.x == destination.x || move_hor > move_ver || move_hor > move_cross)) {
             start.y += my;
         }
+
         if (start.x != destination.x && (start.y == destination.y || move_ver > move_hor || move_ver > move_cross)) {
             start.x += mx;
         }
+
         if (!g_game.map.isTileClear(start.x, start.y, start.z)) {
             return false;
         }
     }
+
     return true;
 }
 
@@ -606,7 +608,7 @@ bool Map::isSightClear(const Position& fromPos, const Position& toPos, bool same
 		if (Position::getDistanceX(fromPos, toPos) < 2 && Position::getDistanceY(fromPos, toPos) < 2) {
 			return true;
 		}
-		
+
 		//sight is clear or sameFloor is enabled
 		bool sightClear = checkSightLine(fromPos.x, fromPos.y, toPos.x, toPos.y, fromPos.z) || checkSightLine(toPos.x, toPos.y, fromPos.x, fromPos.y, fromPos.z);
 		if (sightClear || sameFloor) {
@@ -679,9 +681,9 @@ bool Map::getPathMatching(const Creature& creature, std::vector<Direction>& dirL
 {
 	Position pos = creature.getPosition();
 	Position endPos;
-	
+
 	AStarNodes nodes(pos.x, pos.y);
-	
+
 	int32_t bestMatch = 0;
 
 	static int_fast32_t dirNeighbors[8][5][2] = {
@@ -697,7 +699,7 @@ bool Map::getPathMatching(const Creature& creature, std::vector<Direction>& dirL
 	static int_fast32_t allNeighbors[8][2] = {
 		{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {-1, -1}, {1, -1}, {1, 1}, {-1, 1}
 	};
-	
+
 	const Position startPos = pos;
 
 	AStarNode* found = nullptr;
@@ -714,7 +716,6 @@ bool Map::getPathMatching(const Creature& creature, std::vector<Direction>& dirL
 		const int_fast32_t y = n->y;
 		pos.x = x;
 		pos.y = y;
-		// Will be removed on future
 		if (pathCondition(startPos, pos, fpp, bestMatch)) {
 			found = n;
 			endPos = pos;
@@ -722,7 +723,7 @@ bool Map::getPathMatching(const Creature& creature, std::vector<Direction>& dirL
 				break;
 			}
 		}
-		
+
 		uint_fast32_t dirCount;
 		int_fast32_t* neighbors;
 		if (n->parent) {
@@ -761,15 +762,15 @@ bool Map::getPathMatching(const Creature& creature, std::vector<Direction>& dirL
 		for (uint_fast32_t i = 0; i < dirCount; ++i) {
 			pos.x = x + *neighbors++;
 			pos.y = y + *neighbors++;
-	
+
 			if (fpp.maxSearchDist != 0 && (Position::getDistanceX(startPos, pos) > fpp.maxSearchDist || Position::getDistanceY(startPos, pos) > fpp.maxSearchDist)) {
 				continue;
 			}
-			
+
 			if (fpp.keepDistance && !pathCondition.isInRange(startPos, pos, fpp)) {
 				continue;
 			}
-			
+
 			const Tile* tile;
 			AStarNode* neighborNode = nodes.getNodeByPosition(pos.x, pos.y);
 			if (neighborNode) {
@@ -780,7 +781,7 @@ bool Map::getPathMatching(const Creature& creature, std::vector<Direction>& dirL
 					continue;
 				}
 			}
-			
+
 			//The cost (g) for this neighbor
 			const int_fast32_t cost = AStarNodes::getMapWalkCost(n, pos);
 			const int_fast32_t extraCost = AStarNodes::getTileWalkCost(creature, tile);
@@ -788,10 +789,10 @@ bool Map::getPathMatching(const Creature& creature, std::vector<Direction>& dirL
 
 			if (neighborNode) {
 				if (neighborNode->f <= newf) {
-					// The node on the closed/open list is cheaper than this one
+					//The node on the closed/open list is cheaper than this one
 					continue;
 				}
-				
+
 				neighborNode->f = newf;
 				neighborNode->parent = n;
 				nodes.openNode(neighborNode);
@@ -809,7 +810,7 @@ bool Map::getPathMatching(const Creature& creature, std::vector<Direction>& dirL
 
 		nodes.closeNode(n);
 	}
-	
+
 	if (!found) {
 		return false;
 	}
@@ -853,7 +854,8 @@ bool Map::getPathMatching(const Creature& creature, std::vector<Direction>& dirL
 
 // AStarNodes
 
-AStarNodes::AStarNodes(uint32_t x, uint32_t y): nodes(), openNodes()
+AStarNodes::AStarNodes(uint32_t x, uint32_t y)
+	: nodes(), openNodes()
 {
 	curNode = 1;
 	closedNodes = 0;
@@ -890,7 +892,7 @@ AStarNode* AStarNodes::getBestNode()
 	if (curNode == 0) {
 		return nullptr;
 	}
-	
+
 	int32_t best_node_f = std::numeric_limits<int32_t>::max();
 	int32_t best_node = -1;
 	for (size_t i = 0; i < curNode; i++) {
@@ -941,7 +943,7 @@ AStarNode* AStarNodes::getNodeByPosition(uint32_t x, uint32_t y)
 int_fast32_t AStarNodes::getMapWalkCost(AStarNode* node, const Position& neighborPos)
 {
 	if (std::abs(node->x - neighborPos.x) == std::abs(node->y - neighborPos.y)) {
-		// diagonal movement extra cost
+		//diagonal movement extra cost
 		return MAP_DIAGONALWALKCOST;
 	}
 	return MAP_NORMALWALKCOST;

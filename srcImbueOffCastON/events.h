@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef FS_EVENTS_H
-#define FS_EVENTS_H
+#ifndef FS_EVENTS_H_BD444CC0EE167E5777E4C90C766B36DC
+#define FS_EVENTS_H_BD444CC0EE167E5777E4C90C766B36DC
 
 #include "luascript.h"
 #include "const.h"
@@ -76,10 +76,6 @@ class Events
 		// Monster
 		int32_t monsterOnDropLoot = -1;
 		int32_t monsterOnSpawn = -1;
-		
-		// Item
-		int32_t itemOnImbue = -1;
-		int32_t itemOnRemoveImbue = -1;
 	};
 
 	public:
@@ -131,10 +127,6 @@ class Events
 		// Monster
 		void eventMonsterOnDropLoot(Monster* monster, Container* corpse);
 		bool eventMonsterOnSpawn(Monster* monster, const Position& position, bool startup, bool artificial);
-		
-		// Item
-		bool eventItemOnImbue(Item* item, std::shared_ptr<Imbuement> imbuement, bool created = true);
-		void eventItemOnRemoveImbue(Item* item, ImbuementType imbueType, bool decayed = false);
 
 	private:
 		LuaScriptInterface scriptInterface;

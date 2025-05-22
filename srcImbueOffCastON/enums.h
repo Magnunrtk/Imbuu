@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef FS_ENUMS_H
-#define FS_ENUMS_H
+#ifndef FS_ENUMS_H_003445999FEE4A67BCECBE918B0124CE
+#define FS_ENUMS_H_003445999FEE4A67BCECBE918B0124CE
 
 enum RuleViolationType_t : uint8_t {
 	REPORT_TYPE_NAME = 0,
@@ -95,7 +95,8 @@ enum itemAttrTypes : uint32_t {
 	ITEM_ATTRIBUTE_ATTACK_SPEED = 1 << 26,
 	ITEM_ATTRIBUTE_CLASSIFICATION = 1 << 27,
 	ITEM_ATTRIBUTE_TIER = 1 << 28,
-	ITEM_ATTRIBUTE_AUTOOPEN = 1 << 29,
+	ITEM_ATTRIBUTE_IMBUEMENTSLOTS = 1 << 29,
+	ITEM_ATTRIBUTE_AUTOOPEN = 1 << 30,
 
 	ITEM_ATTRIBUTE_CUSTOM = 1U << 31
 };
@@ -108,11 +109,6 @@ enum VipStatus_t : uint8_t {
 enum MarketAction_t {
 	MARKETACTION_BUY = 0,
 	MARKETACTION_SELL = 1,
-};
-
-enum MarketRequest_t {
-	MARKETREQUEST_OWN_OFFERS = 0xFFFE,
-	MARKETREQUEST_OWN_HISTORY = 0xFFFF,
 };
 
 enum MarketOfferState_t {
@@ -484,7 +480,6 @@ enum ReturnValue {
 	RETURNVALUE_ITEMCANNOTBEMOVEDTHERE,
 	RETURNVALUE_YOUCANNOTUSETHISBED,
 	RETURNVALUE_QUIVERAMMOONLY,
-	RETURNVALUE_LOOTPOUCHINVALIDITEM,
 	RETURNVALUE_REWARDCHESTISEMPTY,
 };
 
@@ -605,7 +600,6 @@ enum CombatOrigin
 	ORIGIN_RANGED,
 	ORIGIN_WAND,
 	ORIGIN_REFLECT,
-	ORIGIN_IMBUEMENT,
 };
 
 struct CombatDamage
@@ -621,8 +615,6 @@ struct CombatDamage
 	bool leeched = false;
 };
 
-using MarketOfferList = std::list<MarketOffer>;
-using HistoryMarketOfferList = std::list<HistoryMarketOffer>;
 using ShopInfoList = std::list<ShopInfo>;
 
 enum MonstersEvent_t : uint8_t {
@@ -640,7 +632,7 @@ struct Reflect {
 
 	Reflect& operator+=(const Reflect& other) {
 		percent += other.percent;
-		chance = static_cast<uint16_t>(std::min(100, chance + other.chance));
+		chance = std::min(100, chance + other.chance);
 		return *this;
 	}
 

@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef FS_CONDITION_H
-#define FS_CONDITION_H
+#ifndef FS_CONDITION_H_F92FF8BDDD5B4EA59E2B1BB5C9C0A086
+#define FS_CONDITION_H_F92FF8BDDD5B4EA59E2B1BB5C9C0A086
 
 #include "fileloader.h"
 #include "enums.h"
@@ -131,7 +131,6 @@ class Condition
 
 	private:
 		ConditionId_t id;
-		Creature* source = nullptr;
 };
 
 class ConditionGeneric : public Condition

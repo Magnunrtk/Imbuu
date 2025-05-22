@@ -23,8 +23,6 @@
 
 #include "game.h"
 
-#include "iomarket.h"
-
 #include "configmanager.h"
 #include "scriptmanager.h"
 #include "rsa.h"
@@ -140,7 +138,8 @@ void printServerVersion()
 	std::cout << std::endl;
 
 	std::cout << "A server developed by " << STATUS_SERVER_DEVELOPERS << std::endl;
-	std::cout << "Discord: SoyFabi_" << std::endl;
+	std::cout << "Downgraded and further developed by Nekiro" << std::endl;
+	std::cout << "Visit our forum for updates, support, and resources: http://otland.net/." << std::endl;
 	std::cout << std::endl;
 }
 
@@ -320,9 +319,6 @@ void mainLoader(int, char*[], ServiceManager* services)
 	}
 
 	g_game.map.houses.payHouses(rentPeriod);
-	
-	IOMarket::checkExpiredOffers();
-	IOMarket::getInstance().updateStatistics();
 
 	std::cout << ">> Loaded all modules, server starting up..." << std::endl;
 
@@ -336,13 +332,6 @@ void mainLoader(int, char*[], ServiceManager* services)
 	g_game.setGameState(GAME_STATE_NORMAL);
 	g_loaderSignal.notify_all();
 }
-
-#ifndef _WIN32
-__attribute__ ((used)) void saveServer() {
-	if(g_game.getPlayersOnline() > 0)
-		g_game.saveGameState(true);
-}
-#endif
 
 bool argumentsHandler(const StringVector& args)
 {

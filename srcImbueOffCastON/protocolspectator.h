@@ -18,868 +18,681 @@ class Container;
 class Tile;
 class Connection;
 class ProtocolSpectator;
-
 using ProtocolSpectator_ptr = std::shared_ptr<ProtocolSpectator>;
 extern Game g_game;
 
 typedef std::map<std::string, uint32_t> DataList;
 
 class ProtocolSpectator {
-public:
-    explicit ProtocolSpectator(ProtocolGame_ptr protocol) : owner(protocol) {}
-    ~ProtocolSpectator() {
-        setBroadcast(false);
-    }
-
-    void clear(bool full = true) {
-        for (auto& it : spectators) {
-            it->disconnect();
-        }
-        spectators.clear();
-
-        if (!full) {
-            return;
+    public:
+        explicit ProtocolSpectator(ProtocolGame_ptr protocol) : owner(protocol) {}
+        ~ProtocolSpectator() {
+            setBroadcast(false);
         }
 
-        mutes.clear();
-        bans.clear();
+        void clear(bool full = true) {
+            for(auto& it : spectators)
+                it->disconnect();
+            spectators.clear();
 
-        cast_password.clear();
-        cast_description.clear();
-        broadcast = false;
-    }
+            if (!full) {
+                return;
+            }
 
-    void addSpectator(ProtocolGame_ptr spectator);
-    void removeSpectator(ProtocolGame_ptr spectator);
-    void spectatorSay(ProtocolGame_ptr spectator, const std::string& text);
-    void sendCastMessage(const std::string& author, const std::string& text, SpeakClasses type, ProtocolGame_ptr target = nullptr);
+            mutes.clear();
+            bans.clear();
 
-    void sendCastChannel() {
-        if (owner) {
-            owner->sendCastChannel();
-        }
-    }
-
-    DataList spectatorList() const {
-        DataList ret;
-        for (auto& it : spectators) {
-            ret[it->getSpectatorName()] = it->getIP();
-        }
-        return ret;
-    }
-
-    void kick(const DataList& _kicks);
-    DataList muteList() const {
-        return mutes;
-    }
-    void mute(const DataList& _mutes) {
-        mutes = _mutes;
-    }
-    DataList banList() const {
-        return bans;
-    }
-    void ban(const DataList& _bans);
-    bool isBanned(uint32_t ip) const;
-
-    const std::string& password() const {
-        return cast_password;
-    }
-    void setPassword(const std::string& new_password) {
-        cast_password = new_password;
-    }
-
-    const std::string& description() const {
-        return cast_description;
-    }
-    void setDescription(const std::string& new_description) {
-        cast_description = new_description;
-    }
-
-    bool isBroadcasting() const {
-        return broadcast;
-    }
-    void setBroadcast(bool value);
-
-    bool isWaitingForUpdate() const {
-        return update_status;
-    }
-    void setUpdateStatus(bool value) {
-        update_status = value;
-    }
-
-    ProtocolGame_ptr protocol() {
-        return owner;
-    }
-
-    void sendPing() {
-        if (owner) {
-            owner->sendPing();
+            cast_password = "";
+            cast_description = "";
+            broadcast = false;
         }
 
-        for (auto& it : spectators) {
-            it->sendPing();
-        }
-    }
+        void addSpectator(ProtocolGame_ptr spectator);
+        void removeSpectator(ProtocolGame_ptr spectator);
+        void spectatorSay(ProtocolGame_ptr spectator, const std::string& text);
+        void sendCastMessage(const std::string& author, const std::string& text, SpeakClasses type, ProtocolGame_ptr target = nullptr);
 
-private:
-    uint16_t getVersion() const {
-        if (!owner) {
+        void sendCastChannel() {
+            if(owner)
+                owner->sendCastChannel();
+        }
+
+        DataList spectatorList() const {
+            DataList ret;
+            for(auto& it : spectators)
+                ret[it->getSpectatorName()] = it->getIP();
+            return ret;
+        }
+
+        void kick(const DataList& _kicks);
+        DataList muteList() const {
+            return mutes;
+        }
+        void mute(const DataList& _mutes) {
+            mutes = _mutes;
+        }
+        DataList banList() const {
+            return bans;
+        }
+        void ban(const DataList& _bans);
+        bool isBanned(uint32_t ip) const;
+
+        const std::string password() const {
+            return cast_password;
+        }
+        void setPassword(const std::string& new_password) {
+            cast_password = new_password;
+        }
+
+        const std::string description() const {
+            return cast_description;
+        }
+        void setDescription(const std::string& new_description) {
+            cast_description = new_description;
+        }
+
+        bool isBroadcasting() const {
+            return broadcast;
+        }
+        void setBroadcast(bool value);
+
+        bool isWaitingForUpdate() const {
+            return update_status;
+        }
+        void setUpdateStatus(bool value) {
+            update_status = value;
+        }
+
+	    ProtocolGame_ptr protocol() {
+		    return owner;
+	    }
+
+        void sendPing() {
+            if (owner)
+                owner->sendPing();
+
+            for (auto &it : spectators)
+                it->sendPing();
+        }
+
+
+    private:
+        uint16_t getVersion() const {
+            if (!owner)
+                return 0;
+
+            return owner->getVersion();
+        }
+
+        void disconnect() const {
+            if (owner)
+                owner->disconnect();
+
+            for (auto &it : spectators)
+                it->disconnect();
+        }
+
+        void setOwner(ProtocolGame_ptr new_owner) {
+            owner = new_owner;
+            if(!owner)
+                clear();
+        }
+
+        uint32_t getIP() const {
+            if(owner)
+                return owner->getIP();
+
             return 0;
         }
 
-        return owner->getVersion();
-    }
+        void connect(uint32_t playerId, OperatingSystem_t operatingSystem) {
+            if (owner)
+                owner->connect(playerId, operatingSystem);
 
-    void disconnect() const {
-        if (owner) {
-            owner->disconnect();
+            for (auto &it : spectators)
+                it->connect(playerId, operatingSystem);
         }
 
-        for (auto& it : spectators) {
-            it->disconnect();
-        }
-    }
-
-    void setOwner(ProtocolGame_ptr new_owner) {
-        owner = new_owner;
-        if (!owner) {
+        void logout(bool displayEffect, bool forced) {
+            if(owner)
+                owner->logout(displayEffect, forced);
             clear();
         }
-    }
 
-    uint32_t getIP() const {
-        if (owner) {
-            return owner->getIP();
-        }
-
-        return 0;
-    }
-
-    void connect(uint32_t playerId, OperatingSystem_t operatingSystem) {
-        if (owner) {
-            owner->connect(playerId, operatingSystem);
-        }
-
-        for (auto& it : spectators) {
-            it->connect(playerId, operatingSystem);
-        }
-    }
-
-    void logout(bool displayEffect, bool forced) {
-        if (owner) {
-            owner->logout(displayEffect, forced);
-        }
-        clear();
-    }
-
-    void disconnectClient(const std::string& message) const {
-        if (owner) {
-            owner->disconnectClient(message);
-        }
+        void disconnectClient(const std::string& message) const {
+            if (owner)
+                owner->disconnectClient(message);
 
-        for (auto& it : spectators) {
-            it->disconnectClient(message);
+            for (auto &it : spectators)
+                it->disconnectClient(message);
         }
-    }
-
-    void writeToOutputBuffer(const NetworkMessage& msg) {
-        if (owner) {
-            owner->writeToOutputBuffer(msg);
-        }
-    }
-
-    void release() {
-        clear();
-
-        if (owner) {
-            owner->release();
-        }
-    }
-
-    bool canSee(int32_t x, int32_t y, int32_t z) const {
-        if (!owner) {
-            return false;
-        }
-
-        return owner->canSee(x, y, z);
-    }
-
-    bool canSee(const Creature* creature) const {
-        if (!owner) {
-            return false;
-        }
-
-        return owner->canSee(creature);
-    }
 
-    bool canSee(const Position& pos) const {
-        if (!owner) {
-            return false;
+        void writeToOutputBuffer(const NetworkMessage& msg) {
+            if (owner)
+                owner->writeToOutputBuffer(msg);
         }
 
-        return owner->canSee(pos);
-    }
+        void release() {
+            clear();
 
-    void sendFYIBox(const std::string& message) {
-        if (owner) {
-            owner->sendFYIBox(message);
+            if (owner)
+                owner->release();
         }
-    }
 
-    void sendChannelMessage(const std::string& author, const std::string& text, SpeakClasses type, uint16_t channel) {
-        if (owner) {
-            owner->sendChannelMessage(author, text, type, channel);
-        }
+        bool canSee(int32_t x, int32_t y, int32_t z) const {
+            if (!owner)
+                return false;
 
-        for (auto& it : spectators) {
-            it->sendChannelMessage(author, text, type, channel);
+            return owner->canSee(x, y, z);
         }
-    }
 
-    void sendClosePrivate(uint16_t channelId) {
-        if (owner) {
-            owner->sendClosePrivate(channelId);
-        }
+        bool canSee(const Creature * creature) const {
+            if (!owner)
+                return false;
 
-        for (auto& it : spectators) {
-            it->sendClosePrivate(channelId);
+            return owner->canSee(creature);
         }
-    }
 
-    void sendCreatePrivateChannel(uint16_t channelId, const std::string& channelName) {
-        if (owner) {
-            owner->sendCreatePrivateChannel(channelId, channelName);
-        }
+        bool canSee(const Position &pos) const {
+            if (!owner)
+                return false;
 
-        for (auto& it : spectators) {
-            it->sendCreatePrivateChannel(channelId, channelName);
+            return owner->canSee(pos);
         }
-    }
 
-    void sendChannelsDialog() {
-        if (owner) {
-            owner->sendChannelsDialog();
+        //Send functions
+        void sendFYIBox(const std::string& message) {
+            if (owner) {
+                owner->sendFYIBox(message);
+            }
         }
-    }
 
-    void sendChannel(uint16_t channelId, const std::string& channelName) {
-        if (owner) {
-            owner->sendChannel(channelId, channelName);
-        }
+        void sendChannelMessage(const std::string &author, const std::string &text, SpeakClasses type, uint16_t channel) {
+            if (owner)
+                owner->sendChannelMessage(author, text, type, channel);
 
-        for (auto& it : spectators) {
-            it->sendChannel(channelId, channelName);
+            for (auto &it : spectators)
+                it->sendChannelMessage(author, text, type, channel);
         }
-    }
 
-    void sendTutorial(uint8_t tutorialId) {
-        if (owner) {
-            owner->sendTutorial(tutorialId);
-        }
-    }
+        void sendClosePrivate(uint16_t channelId) {
+            if (owner)
+                owner->sendClosePrivate(channelId);
 
-    void sendAddMarker(const Position& pos, uint8_t markType, const std::string& desc) {
-        if (owner) {
-            owner->sendAddMarker(pos, markType, desc);
+            for (auto &it : spectators)
+                it->sendClosePrivate(channelId);
         }
-    }
 
-    void sendOpenPrivateChannel(const std::string& receiver) {
-        if (owner) {
-            owner->sendOpenPrivateChannel(receiver);
-        }
+        void sendCreatePrivateChannel(uint16_t channelId, const std::string &channelName) {
+            if (owner)
+                owner->sendCreatePrivateChannel(channelId, channelName);
 
-        for (auto& it : spectators) {
-            it->sendOpenPrivateChannel(receiver);
+            for (auto &it : spectators)
+                it->sendCreatePrivateChannel(channelId, channelName);
         }
-    }
 
-    void sendToChannel(const Creature* creature, SpeakClasses type, const std::string& text, uint16_t channelId) {
-        if (owner) {
-            owner->sendToChannel(creature, type, text, channelId);
+        void sendChannelsDialog() {
+            if (owner)
+                owner->sendChannelsDialog();
         }
 
-        for (auto& it : spectators) {
-            it->sendToChannel(creature, type, text, channelId);
-        }
-    }
+        void sendChannel(uint16_t channelId, const std::string &channelName) {
+            if (owner)
+                owner->sendChannel(channelId, channelName);
 
-    void sendShop(const ShopInfoList& itemList) {
-        if (owner) {
-            owner->sendShop(itemList);
+            for (auto& it : spectators)
+                it->sendChannel(channelId, channelName);
         }
 
-        for (auto& it : spectators) {
-            it->sendShop(itemList);
+        void sendTutorial(uint8_t tutorialId) {
+            if (owner) {
+                owner->sendTutorial(tutorialId);
+            }
         }
-    }
 
-    void sendSaleItemList(const ShopInfoList& shop) {
-        if (owner) {
-            owner->sendSaleItemList(shop);
+        void sendAddMarker(const Position& pos, uint8_t markType, const std::string& desc) {
+            if (owner) {
+                owner->sendAddMarker(pos, markType, desc);
+            }
         }
 
-        for (auto& it : spectators) {
-            it->sendSaleItemList(shop);
-        }
-    }
+        void sendOpenPrivateChannel(const std::string &receiver) {
+            if (owner)
+                owner->sendOpenPrivateChannel(receiver);
 
-    void sendCloseShop() {
-        if (owner) {
-            owner->sendCloseShop();
+            for (auto &it : spectators)
+                it->sendOpenPrivateChannel(receiver);
         }
 
-        for (auto& it : spectators) {
-            it->sendCloseShop();
-        }
-    }
+        void sendToChannel(const Creature *creature, SpeakClasses type, const std::string &text, uint16_t channelId) {
+            if (owner)
+                owner->sendToChannel(creature, type, text, channelId);
 
-    void sendMarketEnter() {
-        if (owner) {
-            owner->sendMarketEnter();
+            for (auto &it : spectators)
+                it->sendToChannel(creature, type, text, channelId);
         }
 
-        for (auto& it : spectators) {
-            it->sendMarketEnter();
-        }
-    }
+        void sendShop(const ShopInfoList& itemList) {
+            if (owner)
+                owner->sendShop(itemList);
 
-    void sendMarketBrowseItem(uint16_t itemId, const MarketOfferList& buyOffers, const MarketOfferList& sellOffers) {
-        if (owner) {
-            owner->sendMarketBrowseItem(itemId, buyOffers, sellOffers);
+            for (auto& it : spectators)
+                it->sendShop(itemList);
         }
 
-        for (auto& it : spectators) {
-            it->sendMarketBrowseItem(itemId, buyOffers, sellOffers);
-        }
-    }
+        void sendSaleItemList(const ShopInfoList& shop) {
+            if (owner)
+                owner->sendSaleItemList(shop);
 
-    void sendMarketBrowseOwnOffers(const MarketOfferList& buyOffers, const MarketOfferList& sellOffers) {
-        if (owner) {
-            owner->sendMarketBrowseOwnOffers(buyOffers, sellOffers);
+            for (auto& it : spectators)
+                it->sendSaleItemList(shop);
         }
 
-        for (auto& it : spectators) {
-            it->sendMarketBrowseOwnOffers(buyOffers, sellOffers);
-        }
-    }
+        void sendCloseShop() {
+            if (owner)
+                owner->sendCloseShop();
 
-    void sendMarketBrowseOwnHistory(const HistoryMarketOfferList& buyOffers, const HistoryMarketOfferList& sellOffers) {
-        if (owner) {
-            owner->sendMarketBrowseOwnHistory(buyOffers, sellOffers);
+            for (auto& it : spectators)
+                it->sendCloseShop();
         }
 
-        for (auto& it : spectators) {
-            it->sendMarketBrowseOwnHistory(buyOffers, sellOffers);
+        void sendPrivateMessage(const Player *speaker, SpeakClasses type, const std::string &text) {
+            if (owner)
+                owner->sendPrivateMessage(speaker, type, text);
         }
-    }
 
-    void sendMarketDetail(uint16_t itemId) {
-        if (owner) {
-            owner->sendMarketDetail(itemId);
-        }
+        void sendIcons(uint16_t icons) {
+            if (owner)
+                owner->sendIcons(icons);
 
-        for (auto& it : spectators) {
-            it->sendMarketDetail(itemId);
+            for (auto &it : spectators)
+                it->sendIcons(icons);
         }
-    }
 
-    void sendMarketAcceptOffer(const MarketOfferEx& offer) {
-        if (owner) {
-            owner->sendMarketAcceptOffer(offer);
-        }
+        void sendDistanceShoot(const Position &from, const Position &to, uint8_t type) {
+            if (owner)
+                owner->sendDistanceShoot(from, to, type);
 
-        for (auto& it : spectators) {
-            it->sendMarketAcceptOffer(offer);
+            for (auto &it : spectators)
+                it->sendDistanceShoot(from, to, type);
         }
-    }
 
-    void sendMarketCancelOffer(const MarketOfferEx& offer) {
-        if (owner) {
-            owner->sendMarketCancelOffer(offer);
-        }
+        void sendMagicEffect(const Position &pos, uint8_t type) {
+            if (owner)
+                owner->sendMagicEffect(pos, type);
 
-        for (auto& it : spectators) {
-            it->sendMarketCancelOffer(offer);
+            for (auto &it : spectators)
+                it->sendMagicEffect(pos, type);
         }
-    }
 
-    void sendPrivateMessage(const Player* speaker, SpeakClasses type, const std::string& text) {
-        if (owner) {
-            owner->sendPrivateMessage(speaker, type, text);
-        }
-    }
+        void sendCreatureHealth(const Creature *creature) {
+            if (owner)
+                owner->sendCreatureHealth(creature);
 
-    void sendIcons(uint16_t icons) {
-        if (owner) {
-            owner->sendIcons(icons);
+            for (auto &it : spectators)
+                it->sendCreatureHealth(creature);
         }
 
-        for (auto& it : spectators) {
-            it->sendIcons(icons);
-        }
-    }
+        void sendSkills() {
+            if (owner)
+                owner->sendSkills();
 
-    void sendDistanceShoot(const Position& from, const Position& to, uint8_t type) {
-        if (owner) {
-            owner->sendDistanceShoot(from, to, type);
+            for (auto &it : spectators)
+                it->sendSkills();
         }
 
-        for (auto& it : spectators) {
-            it->sendDistanceShoot(from, to, type);
-        }
-    }
+        void sendAnimatedText(const std::string& message, const Position& pos, TextColor_t color) const {
+            if (owner) {
+                owner->sendAnimatedText(message, pos, color);
+            }
 
-    void sendMagicEffect(const Position& pos, uint8_t type) {
-        if (owner) {
-            owner->sendMagicEffect(pos, type);
+            for (auto& it : spectators)
+                it->sendAnimatedText(message, pos, color);
         }
+		
+		void sendModalWindow(const ModalWindow& modalWindow) const {
+            if (owner) {
+                owner->sendModalWindow(modalWindow);
+            }
 
-        for (auto& it : spectators) {
-            it->sendMagicEffect(pos, type);
+            for (auto& it : spectators)
+                it->sendModalWindow(modalWindow);
         }
-    }
 
-    void sendCreatureHealth(const Creature* creature) {
-        if (owner) {
-            owner->sendCreatureHealth(creature);
-        }
+        void sendCreatureTurn(const Creature *creature, uint32_t stackPos) {
+            if (owner)
+                owner->sendCreatureTurn(creature, stackPos);
 
-        for (auto& it : spectators) {
-            it->sendCreatureHealth(creature);
+            for (auto &it : spectators)
+                it->sendCreatureTurn(creature, stackPos);
         }
-    }
 
-    void sendSkills() {
-        if (owner) {
-            owner->sendSkills();
-        }
+        void sendCreatureSay(const Creature *creature, SpeakClasses type, const std::string &text,
+                             const Position *pos = nullptr) {
+            if (owner)
+                owner->sendCreatureSay(creature, type, text, pos);
 
-        for (auto& it : spectators) {
-            it->sendSkills();
+            for (auto &it : spectators)
+                it->sendCreatureSay(creature, type, text, pos);
         }
-    }
 
-    void sendAnimatedText(const std::string& message, const Position& pos, TextColor_t color) const {
-        if (owner) {
-            owner->sendAnimatedText(message, pos, color);
-        }
+        void sendCancelWalk() {
+            if (owner)
+                owner->sendCancelWalk();
 
-        for (auto& it : spectators) {
-            it->sendAnimatedText(message, pos, color);
+            for (auto &it : spectators)
+                it->sendCancelWalk();
         }
-    }
 
-    void sendModalWindow(const ModalWindow& modalWindow) const {
-        if (owner) {
-            owner->sendModalWindow(modalWindow);
-        }
+        void sendChangeSpeed(const Creature *creature, uint32_t speed) {
+            if (owner)
+                owner->sendChangeSpeed(creature, speed);
 
-        for (auto& it : spectators) {
-            it->sendModalWindow(modalWindow);
+            for (auto &it : spectators)
+                it->sendChangeSpeed(creature, speed);
         }
-    }
 
-    void sendCreatureTurn(const Creature* creature, uint32_t stackPos) {
-        if (owner) {
-            owner->sendCreatureTurn(creature, stackPos);
-        }
+        void sendCancelTarget() {
+            if (owner)
+                owner->sendCancelTarget();
 
-        for (auto& it : spectators) {
-            it->sendCreatureTurn(creature, stackPos);
+            for (auto &it : spectators)
+                it->sendCancelTarget();
         }
-    }
 
-    void sendCreatureSay(const Creature* creature, SpeakClasses type, const std::string& text, const Position* pos = nullptr) {
-        if (owner) {
-            owner->sendCreatureSay(creature, type, text, pos);
-        }
+        void sendCreatureOutfit(const Creature *creature, const Outfit_t &outfit) {
+            if (owner)
+                owner->sendCreatureOutfit(creature, outfit);
 
-        for (auto& it : spectators) {
-            it->sendCreatureSay(creature, type, text, pos);
+            for (auto &it : spectators)
+                it->sendCreatureOutfit(creature, outfit);
         }
-    }
 
-    void sendCancelWalk() {
-        if (owner) {
-            owner->sendCancelWalk();
-        }
+        void sendStats() {
+            if (owner)
+                owner->sendStats();
 
-        for (auto& it : spectators) {
-            it->sendCancelWalk();
-        }
-    }
-	
-    void sendChangeSpeed(const Creature* creature, uint32_t speed) {
-        if (owner) {
-            owner->sendChangeSpeed(creature, speed);
+            for (auto &it : spectators)
+                it->sendStats();
         }
 
-        for (auto& it : spectators) {
-            it->sendChangeSpeed(creature, speed);
-        }
-    }
+        void sendTextMessage(const TextMessage &message) {
+            if (owner)
+                owner->sendTextMessage(message);
 
-    void sendCancelTarget() {
-        if (owner) {
-            owner->sendCancelTarget();
+            for (auto &it : spectators)
+                it->sendTextMessage(message);
         }
 
-        for (auto& it : spectators) {
-            it->sendCancelTarget();
-        }
-    }
+        void sendReLoginWindow() const {
+            if (owner) {
+                owner->sendReLoginWindow();
+            }
 
-    void sendCreatureOutfit(const Creature* creature, const Outfit_t& outfit) {
-        if (owner) {
-            owner->sendCreatureOutfit(creature, outfit);
+            for (auto& it : spectators)
+                it->sendReLoginWindow();
         }
 
-        for (auto& it : spectators) {
-            it->sendCreatureOutfit(creature, outfit);
-        }
-    }
+        void sendCreatureShield(const Creature *creature) {
+            if (owner)
+                owner->sendCreatureShield(creature);
 
-    void sendStats() {
-        if (owner) {
-            owner->sendStats();
+            for (auto &it : spectators)
+                it->sendCreatureShield(creature);
         }
 
-        for (auto& it : spectators) {
-            it->sendStats();
-        }
-    }
+        void sendCreatureSkull(const Creature *creature) {
+            if (owner)
+                owner->sendCreatureSkull(creature);
 
-    void sendTextMessage(const TextMessage& message) {
-        if (owner) {
-            owner->sendTextMessage(message);
+            for (auto &it : spectators)
+                it->sendCreatureSkull(creature);
         }
 
-        for (auto& it : spectators) {
-            it->sendTextMessage(message);
-        }
-    }
+        void sendTradeItemRequest(const std::string &traderName, const Item *item, bool ack) {
+            if (owner)
+                owner->sendTradeItemRequest(traderName, item, ack);
 
-    void sendReLoginWindow() const {
-        if (owner) {
-            owner->sendReLoginWindow();
+            for (auto &it : spectators)
+                it->sendTradeItemRequest(traderName, item, ack);
         }
 
-        for (auto& it : spectators) {
-            it->sendReLoginWindow();
-        }
-    }
+        void sendCloseTrade() {
+            if (owner)
+                owner->sendCloseTrade();
 
-    void sendCreatureShield(const Creature* creature) {
-        if (owner) {
-            owner->sendCreatureShield(creature);
+            for (auto &it : spectators)
+                it->sendCloseTrade();
         }
 
-        for (auto& it : spectators) {
-            it->sendCreatureShield(creature);
-        }
-    }
+        void sendTextWindow(uint32_t windowTextId, Item *item, uint16_t maxlen, bool canWrite) {
+            if (owner)
+                owner->sendTextWindow(windowTextId, item, maxlen, canWrite);
 
-    void sendCreatureSkull(const Creature* creature) {
-        if (owner) {
-            owner->sendCreatureSkull(creature);
+            for (auto &it : spectators)
+                it->sendTextWindow(windowTextId, item, maxlen, canWrite);
         }
 
-        for (auto& it : spectators) {
-            it->sendCreatureSkull(creature);
-        }
-    }
+        void sendTextWindow(uint32_t windowTextId, uint32_t itemId, const std::string &text) {
+            if (owner)
+                owner->sendTextWindow(windowTextId, itemId, text);
 
-    void sendTradeItemRequest(const std::string& traderName, const Item* item, bool ack) {
-        if (owner) {
-            owner->sendTradeItemRequest(traderName, item, ack);
+            for (auto &it : spectators)
+                it->sendTextWindow(windowTextId, itemId, text);
         }
 
-        for (auto& it : spectators) {
-            it->sendTradeItemRequest(traderName, item, ack);
-        }
-    }
+        void sendHouseWindow(uint32_t windowTextId, const std::string &text) {
+            if (owner)
+                owner->sendHouseWindow(windowTextId, text);
 
-    void sendCloseTrade() {
-        if (owner) {
-            owner->sendCloseTrade();
+            for (auto &it : spectators)
+                it->sendHouseWindow(windowTextId, text);
         }
 
-        for (auto& it : spectators) {
-            it->sendCloseTrade();
+        void sendOutfitWindow() {
+            if (owner)
+                owner->sendOutfitWindow();
         }
-    }
 
-    void sendTextWindow(uint32_t windowTextId, Item* item, uint16_t maxlen, bool canWrite) {
-        if (owner) {
-            owner->sendTextWindow(windowTextId, item, maxlen, canWrite);
-        }
+        void sendUpdatedVIPStatus(uint32_t guid, VipStatus_t newStatus) {
+            if (owner)
+                owner->sendUpdatedVIPStatus(guid, newStatus);
 
-        for (auto& it : spectators) {
-            it->sendTextWindow(windowTextId, item, maxlen, canWrite);
+            for (auto &it : spectators)
+                it->sendUpdatedVIPStatus(guid, newStatus);
         }
-    }
 
-    void sendTextWindow(uint32_t windowTextId, uint32_t itemId, const std::string& text) {
-        if (owner) {
-            owner->sendTextWindow(windowTextId, itemId, text);
-        }
+        void sendVIP(uint32_t guid, const std::string &name, VipStatus_t status) {
+            if (owner)
+                owner->sendVIP(guid, name, status);
 
-        for (auto& it : spectators) {
-            it->sendTextWindow(windowTextId, itemId, text);
+            for (auto &it : spectators)
+                it->sendVIP(guid, name, status);
         }
-    }
 
-    void sendHouseWindow(uint32_t windowTextId, const std::string& text) {
-        if (owner) {
-            owner->sendHouseWindow(windowTextId, text);
-        }
+        void sendFightModes() {
+            if (owner)
+                owner->sendFightModes();
 
-        for (auto& it : spectators) {
-            it->sendHouseWindow(windowTextId, text);
+            for (auto &it : spectators)
+                it->sendFightModes();
         }
-    }
 
-    void sendOutfitWindow() {
-        if (owner) {
-            owner->sendOutfitWindow();
-        }
-    }
+        void sendCreatureLight(const Creature *creature) {
+            if (owner)
+                owner->sendCreatureLight(creature);
 
-    void sendUpdatedVIPStatus(uint32_t guid, VipStatus_t newStatus) {
-        if (owner) {
-            owner->sendUpdatedVIPStatus(guid, newStatus);
+            for (auto &it : spectators)
+                it->sendCreatureLight(creature);
         }
 
-        for (auto& it : spectators) {
-            it->sendUpdatedVIPStatus(guid, newStatus);
-        }
-    }
+        void sendCreatureWalkthrough(const Creature* creature, bool walkthrough) {
+            if (owner)
+                owner->sendCreatureWalkthrough(creature, walkthrough);
 
-    void sendVIP(uint32_t guid, const std::string& name, VipStatus_t status) {
-        if (owner) {
-            owner->sendVIP(guid, name, status);
+            for (auto& it : spectators)
+                it->sendCreatureWalkthrough(creature, walkthrough);
         }
 
-        for (auto& it : spectators) {
-            it->sendVIP(guid, name, status);
-        }
-    }
+        void sendWorldLight(LightInfo lightInfo) {
+            if (owner)
+                owner->sendWorldLight(lightInfo);
 
-    void sendFightModes() {
-        if (owner) {
-            owner->sendFightModes();
+            for (auto &it : spectators)
+                it->sendWorldLight(lightInfo);
         }
 
-        for (auto& it : spectators) {
-            it->sendFightModes();
-        }
-    }
 
-    void sendCreatureLight(const Creature* creature) {
-        if (owner) {
-            owner->sendCreatureLight(creature);
-        }
+        void sendCreatureSquare(const Creature *creature, SquareColor_t color) {
+            if (owner)
+                owner->sendCreatureSquare(creature, color);
 
-        for (auto& it : spectators) {
-            it->sendCreatureLight(creature);
+            for (auto &it : spectators)
+                it->sendCreatureSquare(creature, color);
         }
-    }
 
-    void sendCreatureWalkthrough(const Creature* creature, bool walkthrough) {
-        if (owner) {
-            owner->sendCreatureWalkthrough(creature, walkthrough);
-        }
+        //tiles
+        void sendMapDescription(const Position &pos) {
+            if (owner)
+                owner->sendMapDescription(pos);
 
-        for (auto& it : spectators) {
-            it->sendCreatureWalkthrough(creature, walkthrough);
+            for (auto &it : spectators)
+                it->sendMapDescription(pos);
         }
-    }
-	
-	void sendWorldLight(LightInfo lightInfo) {
-		if (owner) {
-			owner->sendWorldLight(lightInfo);
-		}
 
-		for (auto &it : spectators) {
-			it->sendWorldLight(lightInfo);
-		}
-    }
 
-    void sendCreatureSquare(const Creature* creature, SquareColor_t color) {
-        if (owner) {
-            owner->sendCreatureSquare(creature, color);
-        }
-
-        for (auto& it : spectators) {
-            it->sendCreatureSquare(creature, color);
-        }
-    }
+        void sendAddTileItem(const Position& pos, uint32_t stackpos, const Item* item) {
+            if (owner)
+                owner->sendAddTileItem(pos, stackpos, item);
 
-    void sendMapDescription(const Position& pos) {
-        if (owner) {
-            owner->sendMapDescription(pos);
+            for (auto &it : spectators)
+                it->sendAddTileItem(pos, stackpos, item);
         }
 
-        for (auto& it : spectators) {
-            it->sendMapDescription(pos);
-        }
-    }
+        void sendUpdateTileItem(const Position &pos, uint32_t stackpos, const Item *item) {
+            if (owner)
+                owner->sendUpdateTileItem(pos, stackpos, item);
 
-    void sendAddTileItem(const Position& pos, uint32_t stackpos, const Item* item) {
-        if (owner) {
-            owner->sendAddTileItem(pos, stackpos, item);
+            for (auto &it : spectators)
+                it->sendUpdateTileItem(pos, stackpos, item);
         }
 
-        for (auto& it : spectators) {
-            it->sendAddTileItem(pos, stackpos, item);
-        }
-    }
+        void sendRemoveTileThing(const Position &pos, uint32_t stackpos) {
+            if (owner)
+                owner->sendRemoveTileThing(pos, stackpos);
 
-    void sendUpdateTileItem(const Position& pos, uint32_t stackpos, const Item* item) {
-        if (owner) {
-            owner->sendUpdateTileItem(pos, stackpos, item);
+            for (auto &it : spectators)
+                it->sendRemoveTileThing(pos, stackpos);
         }
 
-        for (auto& it : spectators) {
-            it->sendUpdateTileItem(pos, stackpos, item);
-        }
-    }
+        void sendUpdateTileCreature(const Position& pos, uint32_t stackpos, const Creature* creature) {
+            if (owner)
+                owner->sendUpdateTileCreature(pos, stackpos, creature);
 
-    void sendRemoveTileThing(const Position& pos, uint32_t stackpos) {
-        if (owner) {
-            owner->sendRemoveTileThing(pos, stackpos);
+            for (auto& it : spectators)
+                it->sendUpdateTileCreature(pos, stackpos, creature);
         }
 
-        for (auto& it : spectators) {
-            it->sendRemoveTileThing(pos, stackpos);
-        }
-    }
+        void sendRemoveTileCreature(const Creature* creature, const Position& pos, uint32_t stackpos)
+        {
+            if (owner)
+                owner->sendRemoveTileCreature(creature, pos, stackpos);
 
-    void sendUpdateTileCreature(const Position& pos, uint32_t stackpos, const Creature* creature) {
-        if (owner) {
-            owner->sendUpdateTileCreature(pos, stackpos, creature);
+            for (auto& it : spectators)
+                it->sendRemoveTileCreature(creature, pos, stackpos);
         }
 
-        for (auto& it : spectators) {
-            it->sendUpdateTileCreature(pos, stackpos, creature);
-        }
-    }
+        void sendUpdateTile(const Tile *tile, const Position &pos) {
+            if (owner)
+                owner->sendUpdateTile(tile, pos);
 
-    void sendRemoveTileCreature(const Creature* creature, const Position& pos, uint32_t stackpos) {
-        if (owner) {
-            owner->sendRemoveTileCreature(creature, pos, stackpos);
+            for (auto &it : spectators)
+                it->sendUpdateTile(tile, pos);
         }
 
-        for (auto& it : spectators) {
-            it->sendRemoveTileCreature(creature, pos, stackpos);
-        }
-    }
 
-    void sendUpdateTile(const Tile* tile, const Position& pos) {
-        if (owner) {
-            owner->sendUpdateTile(tile, pos);
-        }
+        void sendAddCreature(const Creature *creature, const Position &pos, int32_t stackpos, bool isLogin) {
+            if (owner)
+                owner->sendAddCreature(creature, pos, stackpos, isLogin);
 
-        for (auto& it : spectators) {
-            it->sendUpdateTile(tile, pos);
+            for (auto &it : spectators)
+                it->sendAddCreature(creature, pos, stackpos, isLogin);
         }
-    }
 
-    void sendAddCreature(const Creature* creature, const Position& pos, int32_t stackpos, bool isLogin) {
-        if (owner) {
-            owner->sendAddCreature(creature, pos, stackpos, isLogin);
-        }
+        void sendMoveCreature(const Creature *creature, const Position &newPos, int32_t newStackPos, const Position &oldPos,
+                              int32_t oldStackPos, bool teleport) {
+            if (owner)
+                owner->sendMoveCreature(creature, newPos, newStackPos, oldPos, oldStackPos, teleport);
 
-        for (auto& it : spectators) {
-            it->sendAddCreature(creature, pos, stackpos, isLogin);
+            for (auto &it : spectators)
+                it->sendMoveCreature(creature, newPos, newStackPos, oldPos, oldStackPos, teleport);
         }
-    }
 
-    void sendMoveCreature(const Creature* creature, const Position& newPos, int32_t newStackPos, const Position& oldPos,
-        int32_t oldStackPos, bool teleport) {
-        if (owner) {
-            owner->sendMoveCreature(creature, newPos, newStackPos, oldPos, oldStackPos, teleport);
-        }
 
-        for (auto& it : spectators) {
-            it->sendMoveCreature(creature, newPos, newStackPos, oldPos, oldStackPos, teleport);
-        }
-    }
+        //containers
+        void sendAddContainerItem(uint8_t cid, const Item *item) {
+            if (owner)
+                owner->sendAddContainerItem(cid, item);
 
-    void sendAddContainerItem(uint8_t cid, const Item* item) {
-        if (owner) {
-            owner->sendAddContainerItem(cid, item);
+            for (auto &it : spectators)
+                it->sendAddContainerItem(cid, item);
         }
 
-        for (auto& it : spectators) {
-            it->sendAddContainerItem(cid, item);
-        }
-    }
+        void sendUpdateContainerItem(uint8_t cid, uint16_t slot, const Item *item) {
+            if (owner)
+                owner->sendUpdateContainerItem(cid, slot, item);
 
-    void sendUpdateContainerItem(uint8_t cid, uint16_t slot, const Item* item) {
-        if (owner) {
-            owner->sendUpdateContainerItem(cid, slot, item);
+            for (auto &it : spectators)
+                it->sendUpdateContainerItem(cid, slot, item);
         }
 
-        for (auto& it : spectators) {
-            it->sendUpdateContainerItem(cid, slot, item);
-        }
-    }
+        void sendRemoveContainerItem(uint8_t cid, uint16_t slot) {
+            if (owner)
+                owner->sendRemoveContainerItem(cid, slot);
 
-    void sendRemoveContainerItem(uint8_t cid, uint16_t slot) {
-        if (owner) {
-            owner->sendRemoveContainerItem(cid, slot);
+            for (auto &it : spectators)
+                it->sendRemoveContainerItem(cid, slot);
         }
 
-        for (auto& it : spectators) {
-            it->sendRemoveContainerItem(cid, slot);
-        }
-    }
 
-    void sendContainer(uint8_t cid, const Container* container, bool hasParent, uint16_t firstIndex) {
-        if (owner) {
-            owner->sendContainer(cid, container, hasParent, firstIndex);
-        }
+        void sendContainer(uint8_t cid, const Container *container, bool hasParent, uint16_t firstIndex) {
+            if (owner)
+                owner->sendContainer(cid, container, hasParent, firstIndex);
 
-        for (auto& it : spectators) {
-            it->sendContainer(cid, container, hasParent, firstIndex);
+            for (auto &it : spectators)
+                it->sendContainer(cid, container, hasParent, firstIndex);
         }
-    }
 
-    void sendCloseContainer(uint8_t cid) {
-        if (owner) {
-            owner->sendCloseContainer(cid);
-        }
+        void sendCloseContainer(uint8_t cid) {
+            if (owner)
+                owner->sendCloseContainer(cid);
 
-        for (auto& it : spectators) {
-            it->sendCloseContainer(cid);
+            for (auto &it : spectators)
+                it->sendCloseContainer(cid);
         }
-    }
 
-    void sendInventoryItem(slots_t slot, const Item* item) {
-        if (owner) {
-            owner->sendInventoryItem(slot, item);
-        }
+        //inventory
+        void sendInventoryItem(slots_t slot, const Item *item) {
+            if (owner)
+                owner->sendInventoryItem(slot, item);
 
-        for (auto& it : spectators) {
-            it->sendInventoryItem(slot, item);
+            for (auto &it : spectators)
+                it->sendInventoryItem(slot, item);
         }
-    }
 
-    friend class ProtocolGame;
-    friend class Player;
+        friend class ProtocolGame;
+        friend class Player;
 
-    ProtocolGame_ptr owner;
-    std::set<ProtocolGame_ptr> spectators;
+        ProtocolGame_ptr owner;
+        std::set<ProtocolGame_ptr> spectators;
 
-    bool broadcast = false;
-    bool update_status = false;
-    std::string cast_password;
-    std::string cast_description;
+        bool broadcast = false;
+        bool update_status = false;
+        std::string cast_password = "";
+        std::string cast_description = "";
 
-    DataList mutes;
-    DataList bans;
+        DataList mutes;
+        DataList bans;
 };
 
 #endif

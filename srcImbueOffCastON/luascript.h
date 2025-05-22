@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef FS_LUASCRIPT_H
-#define FS_LUASCRIPT_H
+#ifndef FS_LUASCRIPT_H_5344B2BC907E46E3943EA78574A212D8
+#define FS_LUASCRIPT_H_5344B2BC907E46E3943EA78574A212D8
 
 #if __has_include("luajit/lua.hpp")
 #include <luajit/lua.hpp>
@@ -763,43 +763,12 @@ class LuaScriptInterface
 
 		static int luaItemSetBoostPercent(lua_State* L);
 		static int luaItemGetBoostPercent(lua_State* L);
-		
-		static int luaItemGetImbuementSlots(lua_State* L);
-		static int luaItemGetFreeImbuementSlots(lua_State* L);
-		static int luaItemCanImbue(lua_State* L);
-		static int luaItemAddImbuementSlots(lua_State* L);
-		static int luaItemRemoveImbuementSlots(lua_State* L);
-		static int luaItemHasImbuementType(lua_State* L);
-		static int luaItemHasImbuement(lua_State* L);
-		static int luaItemHasImbuements(lua_State* L); /// change to isImbued();
-		static int luaItemAddImbuement(lua_State* L);
-		static int luaItemRemoveImbuement(lua_State* L);
-		static int luaItemGetImbuements(lua_State* L);
-
-		// Imbuement
-
-		static int luaImbuementCreate(lua_State* L);
-		static int luaImbuementGetType(lua_State* L);
-		static int luaImbuementIsSkill(lua_State* L);
-		static int luaImbuementIsSpecialSkill(lua_State* L);
-		static int luaImbuementIsStat(lua_State* L);
-		static int luaImbuementIsDamage(lua_State* L);
-		static int luaImbuementIsResist(lua_State* L);
-		static int luaImbuementGetValue(lua_State* L);
-		static int luaImbuementSetValue(lua_State* L);
-		static int luaImbuementGetDuration(lua_State* L);
-		static int luaImbuementSetDuration(lua_State* L);
-		static int luaImbuementSetEquipDecay(lua_State* L);
-		static int luaImbuementSetInfightDecay(lua_State* L);
-		static int luaImbuementIsEquipDecay(lua_State* L);
-		static int luaImbuementIsInfightDecay(lua_State* L);
 
 		// Container
 		static int luaContainerCreate(lua_State* L);
 
 		static int luaContainerGetSize(lua_State* L);
 		static int luaContainerGetCapacity(lua_State* L);
-		static int luaContainerSetCapacity(lua_State* L);
 		static int luaContainerGetEmptySlots(lua_State* L);
 		static int luaContainerGetContentDescription(lua_State* L);
 		static int luaContainerGetItems(lua_State* L);
@@ -1081,11 +1050,7 @@ class LuaScriptInterface
 		static int luaPlayerGetIdleTime(lua_State* L);
 		static int luaPlayerSetIdleTime(lua_State* L);
 		static int luaPlayerResetIdleTime(lua_State* L);
-		
-		static int luaPlayerIsNearDepotBox(lua_State* L);
-		
-		static int luaPlayerOpenMarket(lua_State* L);
-		
+
 		// Monster
 		static int luaMonsterCreate(lua_State* L);
 
@@ -1276,6 +1241,7 @@ class LuaScriptInterface
 		static int luaItemTypeGetAttackSpeed(lua_State* L);
 		static int luaItemTypeGetClassification(lua_State* L);
 		static int luaItemTypeGetTier(lua_State* L);
+		static int luaItemTypeGetImbuementSlots(lua_State* L);
 		static int luaItemTypeGetDefense(lua_State* L);
 		static int luaItemTypeGetExtraDefense(lua_State* L);
 		static int luaItemTypeGetArmor(lua_State* L);
@@ -1290,7 +1256,6 @@ class LuaScriptInterface
 		static int luaItemTypeGetDecayId(lua_State* L);
 		static int luaItemTypeGetRequiredLevel(lua_State* L);
 		static int luaItemTypeGetAmmoType(lua_State* L);
-		static int luaItemTypeGetShootType(lua_State* L);
 		static int luaItemTypeGetCorpseType(lua_State* L);
 		static int luaItemTypeHasShowCount(lua_State* L);
 		static int luaItemTypeGetAbilities(lua_State* L);

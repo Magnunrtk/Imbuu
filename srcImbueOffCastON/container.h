@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef FS_CONTAINER_H
-#define FS_CONTAINER_H
+#ifndef FS_CONTAINER_H_5590165FD8A2451B98D71F13CD3ED8DC
+#define FS_CONTAINER_H_5590165FD8A2451B98D71F13CD3ED8DC
 
 #include <queue>
 
@@ -99,8 +99,9 @@ class Container : public Item, public Cylinder
 		bool empty() const {
 			return itemlist.empty();
 		}
-		uint32_t capacity() const { return maxSize; }
-		void setCapacity(uint32_t capacity) { maxSize = capacity; }
+		uint32_t capacity() const {
+			return maxSize;
+		}
 		uint32_t getAmmoCount() const { return ammoCount; }
 
 		ContainerIterator iterator() const;

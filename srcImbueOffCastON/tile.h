@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef FS_TILE_H
-#define FS_TILE_H
+#ifndef FS_TILE_H_96C7EE7CF8CD48E59D5D554A181F0C56
+#define FS_TILE_H_96C7EE7CF8CD48E59D5D554A181F0C56
 
 #include "cylinder.h"
 #include "item.h"
@@ -252,7 +252,6 @@ class Tile : public Cylinder
 
 		void removeThing(Thing* thing, uint32_t count) override final;
 
-		bool hasCreature(Creature* creature) const;
 		void removeCreature(Creature* creature);
 
 		int32_t getThingIndex(const Thing* thing) const override final;

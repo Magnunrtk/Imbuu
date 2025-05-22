@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef FS_CREATURE_H
-#define FS_CREATURE_H
+#ifndef FS_CREATURE_H_5363C04015254E298F84E6D59A139508
+#define FS_CREATURE_H_5363C04015254E298F84E6D59A139508
 
 #include "map.h"
 #include "position.h"
@@ -69,7 +69,6 @@ class Tile;
 
 static constexpr int32_t EVENT_CREATURECOUNT = 10;
 static constexpr int32_t EVENT_CREATURE_THINK_INTERVAL = 1000;
-
 static constexpr int32_t EVENT_CHECK_CREATURE_INTERVAL = (EVENT_CREATURE_THINK_INTERVAL / EVENT_CREATURECOUNT);
 
 class FrozenPathingConditionCall
@@ -96,7 +95,7 @@ class Creature : virtual public Thing
 	protected:
 		Creature();
 
-	public:	
+	public:
 		virtual ~Creature();
 
 		// non-copyable
@@ -272,7 +271,7 @@ class Creature : virtual public Thing
 		//follow events
 		virtual void onFollowCreature(const Creature*) {}
 		virtual void onFollowCreatureComplete(const Creature*) {}
-		
+
 		//combat functions
 		Creature* getAttackedCreature() {
 			return attackedCreature;
@@ -471,7 +470,7 @@ class Creature : virtual public Thing
 				delete this;
 			}
 		}
-		
+
 	protected:
 		virtual bool useCacheMap() const {
 			return false;
@@ -521,7 +520,6 @@ class Creature : virtual public Thing
 
 		Outfit_t currentOutfit;
 		Outfit_t defaultOutfit;
-		uint16_t currentMount;
 
 		Position lastPosition;
 		LightInfo internalLight;

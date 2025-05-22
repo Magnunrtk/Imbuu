@@ -970,7 +970,7 @@ void Combat::doTargetCombat(Creature* caster, Creature* target, CombatDamage& da
 					casterPlayer->sendMagicEffect(casterPlayer->getPosition(), CONST_ME_MAGIC_RED);
 				}
 			}
-			
+
 			if (casterPlayer->getMana() < casterPlayer->getMaxMana()) {
 				uint16_t chance = casterPlayer->getSpecialSkill(SPECIALSKILL_MANALEECHCHANCE);
 				uint16_t skill = casterPlayer->getSpecialSkill(SPECIALSKILL_MANALEECHAMOUNT);
@@ -1010,7 +1010,7 @@ void Combat::doAreaCombat(Creature* caster, const Position& position, const Area
 			damage.critical = true;
 		}
 	}
-	
+
 	uint32_t maxX = 0;
 	uint32_t maxY = 0;
 
@@ -1132,7 +1132,7 @@ void Combat::doAreaCombat(Creature* caster, const Position& position, const Area
 						casterPlayer->sendMagicEffect(casterPlayer->getPosition(), CONST_ME_MAGIC_RED);
 					}
 				}
-				
+
 				if (casterPlayer->getMana() < casterPlayer->getMaxMana()) {
 					uint16_t chance = casterPlayer->getSpecialSkill(SPECIALSKILL_MANALEECHCHANCE);
 					uint16_t skill = casterPlayer->getSpecialSkill(SPECIALSKILL_MANALEECHAMOUNT);

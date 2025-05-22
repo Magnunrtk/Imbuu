@@ -25,7 +25,6 @@
 #include "configmanager.h"
 #include "events.h"
 #include "scheduler.h"
-
 #include <fmt/format.h>
 
 extern Game g_game;
@@ -47,9 +46,6 @@ Creature::~Creature()
 
 	for (Condition* condition : conditions) {
 		condition->endCondition(this);
-	}
-	
-	for (auto condition : conditions) {
 		delete condition;
 	}
 }
@@ -154,7 +150,7 @@ void Creature::onThink(uint32_t interval)
 		blockCount = std::min<uint32_t>(blockCount + 1, 2);
 		blockTicks = 0;
 	}
-	
+
 	if (followCreature) {
 		walkUpdateTicks += interval;
 		if (forceUpdateFollowPath || walkUpdateTicks >= 2000) {
@@ -168,7 +164,7 @@ void Creature::onThink(uint32_t interval)
 		isUpdatingPath = false;
 		goToFollowCreature();
 	}
-	
+
 	//scripting event - onThink
 	const CreatureEventList& thinkEvents = getCreatureEvents(CREATURE_EVENT_THINK);
 	for (CreatureEvent* thinkEvent : thinkEvents) {
@@ -210,7 +206,7 @@ void Creature::onWalk()
 					player->sendCancelMessage(ret);
 					player->sendCancelWalk();
 				}
-				
+
 				forceUpdateFollowPath = true;
 			}
 		} else {
@@ -279,7 +275,7 @@ void Creature::startAutoWalk(Direction direction)
 		player->sendCancelWalk();
 		return;
 	}
-	
+
 	listWalkDir.clear();
 	listWalkDir.push_back(direction);
 	addEventWalk(true);
@@ -290,13 +286,13 @@ void Creature::startAutoWalk(const std::vector<Direction>& listDir)
 	if (hasCondition(CONDITION_ROOTED)) {
 		return;
 	}
-
+	
 	Player* player = getPlayer();
 	if (player && player->isMovementBlocked()) {
 		player->sendCancelWalk();
 		return;
 	}
-	
+
 	listWalkDir = listDir;
 	addEventWalk(listWalkDir.size() == 1);
 }
@@ -323,7 +319,7 @@ void Creature::addEventWalk(bool firstStep)
 		g_game.checkCreatureWalk(getID());
 	}
 
-	eventWalk = g_scheduler.addEvent(createSchedulerTask(ticks, [id = getID()]() { g_game.checkCreatureWalk(id); }));
+	eventWalk = g_scheduler.addEvent(createSchedulerTask(ticks, std::bind(&Game::checkCreatureWalk, &g_game, getID())));
 }
 
 void Creature::stopEventWalk()
@@ -499,11 +495,11 @@ void Creature::onCreatureMove(Creature* creature, const Tile* newTile, const Pos
 
 		if (!teleport) {
 			if (oldPos.z != newPos.z) {
-				// floor change extra cost
+				//floor change extra cost
 				lastStepCost = 2;
 			} else if (Position::getDistanceX(newPos, oldPos) >= 1 && Position::getDistanceY(newPos, oldPos) >= 1) {
-				// diagonal extra cost
-				lastStepCost = 2;
+				//diagonal extra cost
+				lastStepCost = 3;
 				if (getPlayer()) {
 					lastStepCost -= 1;
 				}
@@ -647,7 +643,7 @@ void Creature::onCreatureMove(Creature* creature, const Tile* newTile, const Pos
 				isUpdatingPath = true;
 			}
 		}
-		
+
 		if (newPos.z != oldPos.z || !canSee(followCreature->getPosition())) {
 			onCreatureDisappear(followCreature, false);
 		}
@@ -749,10 +745,6 @@ void Creature::onDeath()
 
 	if (master) {
 		setMaster(nullptr);
-		
-		if (dynamic_cast<Monster*>(this) != nullptr) {
-			decrementReferenceCounter();
-		}
 	}
 
 	if (droppedCorpse) {
@@ -918,7 +910,10 @@ BlockType_t Creature::blockHit(Creature* attacker, CombatType_t combatType, int3
 	if (attacker) {
 		if (Player* attackerPlayer = attacker->getPlayer()) {
 			for (int32_t slot = CONST_SLOT_FIRST; slot <= CONST_SLOT_LAST; ++slot) {
-				
+				if (!attackerPlayer->isItemAbilityEnabled(static_cast<slots_t>(slot))) {
+					continue;
+				}
+
 				Item* item = attackerPlayer->getInventoryItem(static_cast<slots_t>(slot));
 				if (!item) {
 					continue;
@@ -927,49 +922,6 @@ BlockType_t Creature::blockHit(Creature* attacker, CombatType_t combatType, int3
 				const uint16_t boostPercent = item->getBoostPercent(combatType);
 				if (boostPercent != 0) {
 					damage += std::round(damage * (boostPercent / 100.));
-				}
-				
-				if (item->hasImbuements() && blockType == BLOCK_NONE) {
-					for (auto imbuement : item->getImbuements()) {
-						CombatDamage imbueDamage;
-						imbueDamage.blockType = BLOCK_NONE;
-						imbueDamage.origin = ORIGIN_IMBUEMENT;
-
-						auto conversionAmount = std::round(damage * (imbuement->value / 100.));
-						int32_t damageDifference = 0;
-						switch (imbuement->imbuetype) {
-							case IMBUEMENT_TYPE_FIRE_DAMAGE:
-								imbueDamage.primary.type = COMBAT_FIREDAMAGE;
-								break;
-							case IMBUEMENT_TYPE_ENERGY_DAMAGE:
-								imbueDamage.primary.type = COMBAT_ENERGYDAMAGE;
-								break;
-							case IMBUEMENT_TYPE_EARTH_DAMAGE:
-								imbueDamage.primary.type = COMBAT_EARTHDAMAGE;
-								break;
-							case IMBUEMENT_TYPE_ICE_DAMAGE:
-								imbueDamage.primary.type = COMBAT_ICEDAMAGE;
-								break;
-							case IMBUEMENT_TYPE_HOLY_DAMAGE:
-								imbueDamage.primary.type = COMBAT_HOLYDAMAGE;
-								break;
-							case IMBUEMENT_TYPE_DEATH_DAMAGE:
-								imbueDamage.primary.type = COMBAT_DEATHDAMAGE;
-								break;
-							default:
-								break;
-						}
-
-						if (conversionAmount > 0) {
-							imbueDamage.primary.value -= conversionAmount;
-							g_game.combatChangeHealth(attacker, this, imbueDamage);
-							damageDifference = damage - conversionAmount;
-							if (damageDifference < 0) {
-								damage = (-conversionAmount);
-							}
-							damageDifference = 0;
-						}
-					}
 				}
 			}
 		}
@@ -999,7 +951,7 @@ bool Creature::setAttackedCreature(Creature* creature)
 			attackedCreature = nullptr;
 			return false;
 		}
-		
+
 		attackedCreature = creature;
 		onAttackedCreature(attackedCreature);
 		attackedCreature->onAttacked();
@@ -1017,57 +969,56 @@ void Creature::getPathSearchParams(const Creature*, FindPathParams& fpp) const
 {
 	fpp.fullPathSearch = !hasFollowPath;
 	fpp.clearSight = true;
-	fpp.maxSearchDist = Map::maxViewportX + Map::maxViewportY;
+	fpp.maxSearchDist = 12;
 	fpp.minTargetDist = 1;
 	fpp.maxTargetDist = 1;
 }
 
 void Creature::goToFollowCreature()
 {
-    if (followCreature)
-    {
-        FindPathParams fpp;
-        getPathSearchParams(followCreature, fpp);
-		
+	if (followCreature) {
+		FindPathParams fpp;
+		getPathSearchParams(followCreature, fpp);
+
 		Monster* monster = getMonster();
-        if (monster && !monster->getMaster() && (monster->isFleeing() || fpp.maxTargetDist > 1)) {
-            Direction dir = DIRECTION_NONE;
+		if (monster && !monster->getMaster() && (monster->isFleeing() || fpp.maxTargetDist > 1)) {
+			Direction dir = DIRECTION_NONE;
 
-            if (monster->isFleeing()) {
-                monster->getDistanceStep(followCreature->getPosition(), dir, true);
-            } else { // maxTargetDist > 1
-                if (!monster->getDistanceStep(followCreature->getPosition(), dir)) {
-                    // if we can't get anything then let the A* calculate
-                    listWalkDir.clear();
-                    if (getPathTo(followCreature->getPosition(), listWalkDir, fpp)) {
-                        hasFollowPath = true;
-                        startAutoWalk();
-                    } else {
-                        hasFollowPath = false;
-                    }
-                    return;
-                }
-            }
+			if (monster->isFleeing()) {
+				monster->getDistanceStep(followCreature->getPosition(), dir, true);
+			} else { // maxTargetDist > 1
+				if (!monster->getDistanceStep(followCreature->getPosition(), dir)) {
+					// if we can't get anything then let the A* calculate
+					listWalkDir.clear();
+					if (getPathTo(followCreature->getPosition(), listWalkDir, fpp)) {
+						hasFollowPath = true;
+						startAutoWalk();
+					} else {
+						hasFollowPath = false;
+					}
+					return;
+				}
+			}
 
-            if (dir != DIRECTION_NONE) {
-                listWalkDir.clear();
-                listWalkDir.push_back(dir);
+			if (dir != DIRECTION_NONE) {
+				listWalkDir.clear();
+				listWalkDir.push_back(dir);
 
-                hasFollowPath = true;
-                startAutoWalk();
-            }
-        } else {
-            listWalkDir.clear();
-            if (getPathTo(followCreature->getPosition(), listWalkDir, fpp)) {
-                hasFollowPath = true;
-                startAutoWalk();
-            } else {
-                hasFollowPath = false;
-            }
-        }
-    }
+				hasFollowPath = true;
+				startAutoWalk();
+			}
+		} else {
+			listWalkDir.clear();
+			if (getPathTo(followCreature->getPosition(), listWalkDir, fpp)) {
+				hasFollowPath = true;
+				startAutoWalk();
+			} else {
+				hasFollowPath = false;
+			}
+		}
+	}
 
-    onFollowCreatureComplete(followCreature);
+	onFollowCreatureComplete(followCreature);
 }
 
 bool Creature::setFollowCreature(Creature* creature)
@@ -1076,7 +1027,7 @@ bool Creature::setFollowCreature(Creature* creature)
 		if (followCreature == creature) {
 			return true;
 		}
-		
+
 		const Position& creaturePos = creature->getPosition();
 		if (creaturePos.z != getPosition().z || !canSee(creaturePos)) {
 			followCreature = nullptr;
@@ -1087,10 +1038,9 @@ bool Creature::setFollowCreature(Creature* creature)
 			listWalkDir.clear();
 			onWalkAborted();
 		}
-		
+
 		hasFollowPath = false;
 		forceUpdateFollowPath = false;
-		
 		followCreature = creature;
 		if (getMonster()) {
 			isUpdatingPath = false;
@@ -1102,7 +1052,7 @@ bool Creature::setFollowCreature(Creature* creature)
 		isUpdatingPath = false;
 		followCreature = nullptr;
 	}
-	
+
 	onFollowCreature(creature);
 	return true;
 }
@@ -1298,37 +1248,6 @@ bool Creature::addCondition(Condition* condition, bool force/* = false*/)
 			return false;
 		}
 	}
-	
-	auto casterId = condition->getParam(CONDITION_PARAM_OWNER);
-	if (condition->getType() == CONDITION_PARALYZE && this->getPlayer() && this->getPlayer()->isWearingImbuedItem() && this->getID() != static_cast<uint32_t>(casterId)) {
-		int32_t chance = 0;
-		for (int32_t slot = static_cast<int32_t>(CONST_SLOT_FIRST); slot <= static_cast<int32_t>(CONST_SLOT_LAST); ++slot) {
-			Item* item = this->getPlayer()->getInventoryItem(slot);
-			if (item && item->hasImbuementType(IMBUEMENT_TYPE_PARALYSIS_DEFLECTION)) {
-				for (auto imbuement : item->getImbuements()) {
-					if (imbuement->imbuetype == IMBUEMENT_TYPE_PARALYSIS_DEFLECTION) {
-						chance += imbuement->value;
-						break;
-					}
-				}
-			}
-		}
-
-		if (chance > 0) {
-			Creature* caster = g_game.getCreatureByID(casterId);
-			if (Player* player = caster->getPlayer()) {
-				player->addCondition(condition);
-				return true;
-			}
-			if (Monster* monster = caster->getMonster()) {
-				int32_t roll = uniform_random(1, 100);
-				if (roll <= chance) {
-					monster->addCondition(condition);
-					return true;
-				}
-			}
-		}
-	}
 
 	Condition* prevCond = getCondition(condition->getType(), condition->getId(), condition->getSubId());
 	if (prevCond) {
@@ -1346,7 +1265,6 @@ bool Creature::addCondition(Condition* condition, bool force/* = false*/)
 	delete condition;
 	return false;
 }
-
 
 bool Creature::addCombatCondition(Condition* condition)
 {
@@ -1530,20 +1448,19 @@ int64_t Creature::getStepDuration(Direction dir) const
 {
 	int64_t stepDuration = getStepDuration();
 	if ((dir & DIRECTION_DIAGONAL_MASK) != 0) {
-		stepDuration *= 2;
+		stepDuration *= 3;
 	}
 	return stepDuration;
 }
 
 int64_t Creature::getStepDuration() const
 {
-	if(isRemoved()) {
+	if (isRemoved()) {
 		return 0;
 	}
 
 	uint32_t groundSpeed;
 	int32_t stepSpeed = getStepSpeed();
-
 	Item* ground = tile->getGround();
 	if (ground) {
 		groundSpeed = Item::items[ground->getID()].speed;
@@ -1554,7 +1471,8 @@ int64_t Creature::getStepDuration() const
 		groundSpeed = 150;
 	}
 
-	int64_t stepDuration = (1000 * groundSpeed) / stepSpeed;
+	double duration = std::floor(1000 * groundSpeed) / stepSpeed;
+	int64_t stepDuration = std::ceil(duration / 50) * 50;
 
 	const Monster* monster = getMonster();
 	if (monster && monster->isTargetNearby() && !monster->isFleeing() && !monster->getMaster()) {

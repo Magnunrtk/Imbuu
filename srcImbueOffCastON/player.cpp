@@ -198,19 +198,6 @@ Item* Player::getInventoryItem(slots_t slot) const
 	return inventory[slot];
 }
 
-Item* Player::getInventoryItem(uint32_t slot) const
-{
-	if (slot < CONST_SLOT_FIRST || slot > CONST_SLOT_LAST) {
-		return nullptr;
-	}
-	return inventory[slot];
-}
-
-bool Player::isInventorySlot(slots_t slot) const
-{
-	return slot >= CONST_SLOT_FIRST && slot <= CONST_SLOT_LAST;
-}
-
 void Player::addConditionSuppressions(uint32_t conditions)
 {
 	conditionSuppressions |= conditions;
@@ -689,8 +676,17 @@ uint16_t Player::getLookCorpse() const
 void Player::addStorageValue(const uint32_t key, const int32_t value, const bool isLogin /* = false*/)
 {
 	if (IS_IN_KEYRANGE(key, RESERVED_RANGE)) {
-		std::cout << "Warning: unknown reserved key: " << key << " player: " << getName() << std::endl;
-		return;
+		if (IS_IN_KEYRANGE(key, OUTFITS_RANGE)) {
+			outfits.emplace_back(
+				value >> 16,
+				value & 0xFF
+			);
+			return;
+		} else if (IS_IN_KEYRANGE(key, MOUNTS_RANGE)) {
+		} else {
+			std::cout << "Warning: unknown reserved key: " << key << " player: " << getName() << std::endl;
+			return;
+		}
 	}
 
 	int32_t oldValue;
@@ -849,7 +845,6 @@ DepotLocker& Player::getDepotLocker()
 		depotLocker = std::make_shared<DepotLocker>(ITEM_LOCKER);
 		depotLocker->internalAddThing(inbox);
 		depotLocker->internalAddThing(Item::CreateItem(ITEM_REWARD_CHEST));
-		depotLocker->internalAddThing(Item::CreateItem(ITEM_MARKET));
 		depotLocker->internalAddThing(supplystash);
 		DepotChest* depotChest = new DepotChest(ITEM_DEPOT);
 		if (depotChest) {
@@ -1145,7 +1140,13 @@ void Player::onCreatureAppear(Creature* creature, bool isLogin)
 
 	if (isLogin && creature == this) {
 
-		onEquipInventory();
+		for (int32_t slot = CONST_SLOT_FIRST; slot <= CONST_SLOT_LAST; ++slot) {
+			Item* item = inventory[slot];
+			if (item) {
+				item->startDecaying();
+				g_moveEvents->onPlayerEquip(this, item, static_cast<slots_t>(slot), false);
+			}
+		}
 
 		for (Condition* condition : storedConditionList) {
 			addCondition(condition);
@@ -1263,15 +1264,6 @@ void Player::onRemoveCreature(Creature* creature, bool isLogout)
 	Creature::onRemoveCreature(creature, isLogout);
 
 	if (creature == this) {
-		for (int32_t slot = CONST_SLOT_FIRST; slot <= CONST_SLOT_LAST; ++slot) {
-			Item* item = inventory[slot];
-			if (item) {
-				g_moveEvents->onPlayerDeEquip(this, item, static_cast<slots_t>(slot));
-			}
-		}
-		
-		onDeEquipInventory();
-		
 		if (isLogout) {
 			loginPosition = getPosition();
 		}
@@ -1396,11 +1388,6 @@ void Player::onCreatureMove(Creature* creature, const Tile* newTile, const Posit
 		}
 		modalWindows.clear();
 	}
-	
-	// leave market
-	if (inMarket) {
-		inMarket = false;
-	}
 
 	if (party) {
 		party->updateSharedExperience();
@@ -1412,29 +1399,6 @@ void Player::onCreatureMove(Creature* creature, const Tile* newTile, const Posit
 			if (Condition* condition = Condition::createCondition(CONDITIONID_DEFAULT, CONDITION_PACIFIED, ticks, 0)) {
 				addCondition(condition);
 			}
-		}
-	}
-}
-
-void Player::onEquipInventory()
-{
-	for (int32_t slot = CONST_SLOT_FIRST; slot <= CONST_SLOT_LAST; ++slot) {
-		Item* item = inventory[slot];
-		if (item) {
-			item->startDecaying();
-			g_moveEvents->onPlayerEquip(this, item, static_cast<slots_t>(slot), false);
-			g_events->eventPlayerOnInventoryUpdate(this, item, static_cast<slots_t>(slot), true);
-		}
-	}
-}
-
-void Player::onDeEquipInventory()
-{
-	for (int32_t slot = CONST_SLOT_FIRST; slot <= CONST_SLOT_LAST; ++slot) {
-		Item* item = inventory[slot];
-		if (item) {
-			g_moveEvents->onPlayerDeEquip(this, item, static_cast<slots_t>(slot));
-			g_events->eventPlayerOnInventoryUpdate(this, item, static_cast<slots_t>(slot), false);
 		}
 	}
 }
@@ -1555,6 +1519,19 @@ void Player::setNextWalkActionTask(SchedulerTask* task)
 	walkTask = task;
 }
 
+void Player::setNextWalkTask(SchedulerTask* task)
+{
+	if (nextStepEvent != 0) {
+		g_scheduler.stopEvent(nextStepEvent);
+		nextStepEvent = 0;
+	}
+
+	if (task) {
+		nextStepEvent = g_scheduler.addEvent(task);
+		resetIdleTime();
+	}
+}
+
 void Player::setNextActionTask(SchedulerTask* task, bool resetIdleTime /*= true */)
 {
 	if (actionTaskEvent != 0) {
@@ -1596,17 +1573,6 @@ void Player::onThink(uint32_t interval)
 		MessageBufferTicks = 0;
 		addMessageBuffer();
 	}
-	
-	// if (isImbued()) { // TODO: Reimplement a check like this to first see if player has any items, then items with imbuements before decaying.
-		for (int32_t slot = CONST_SLOT_FIRST; slot <= CONST_SLOT_LAST; ++slot) {
-			Item* item = inventory[slot];
-			if (item && item->hasImbuements()) {
-				item->decayImbuements(hasCondition(CONDITION_INFIGHT));
-				sendSkills();
-				sendStats();
-			}
-		}
-	// } // part of the above TODO:
 
 	if (g_game.getWorldType() != WORLD_TYPE_PVP_ENFORCED) {
 		checkSkullTicks(interval / 1000);
@@ -2055,43 +2021,6 @@ BlockType_t Player::blockHit(Creature* attacker, CombatType_t combatType, int32_
 					uint16_t charges = item->getCharges();
 					if (charges != 0) {
 						g_game.transformItem(item, item->getID(), charges - 1);
-					}
-				}
-			}
-			
-			if (item->hasImbuements()) {
-				for (auto imbuement : item->getImbuements()) {
-					switch (imbuement->imbuetype) {
-						case ImbuementType::IMBUEMENT_TYPE_FIRE_RESIST:
-							if (combatType == COMBAT_FIREDAMAGE) {
-								damage -= std::round(damage * (imbuement->value / 100.));
-							}
-							break;
-						case ImbuementType::IMBUEMENT_TYPE_EARTH_RESIST:
-							if (combatType == COMBAT_EARTHDAMAGE) {
-								damage -= std::round(damage * (imbuement->value / 100.));
-							}
-							break;
-						case ImbuementType::IMBUEMENT_TYPE_ICE_DAMAGE:
-							if (combatType == COMBAT_ICEDAMAGE) {
-								damage -= std::round(damage * (imbuement->value / 100.));
-							}
-							break;
-						case ImbuementType::IMBUEMENT_TYPE_ENERGY_RESIST:
-							if (combatType == COMBAT_ENERGYDAMAGE) {
-								damage -= std::round(damage * (imbuement->value / 100.));
-							}
-							break;
-						case ImbuementType::IMBUEMENT_TYPE_DEATH_RESIST:
-							if (combatType == COMBAT_DEATHDAMAGE) {
-								damage -= std::round(damage * (imbuement->value / 100.));
-							}
-							break;
-						case ImbuementType::IMBUEMENT_TYPE_HOLY_RESIST:
-							if (combatType == COMBAT_HOLYDAMAGE) {
-								damage -= std::round(damage * (imbuement->value / 100.));
-							}
-							break;
 					}
 				}
 			}
@@ -3136,12 +3065,6 @@ void Player::postAddNotification(Thing* thing, const Cylinder* oldParent, int32_
 		//calling movement scripts
 		g_moveEvents->onPlayerEquip(this, thing->getItem(), static_cast<slots_t>(index), false);
 		g_events->eventPlayerOnInventoryUpdate(this, thing->getItem(), static_cast<slots_t>(index), true);
-		if (isInventorySlot(static_cast<slots_t>(index))) {
-			Item* item = thing->getItem();
-			if (item && item->hasImbuements()) {
-				addItemImbuements(thing->getItem());
-			}
-		}
 	}
 
 	bool requireListUpdate = false;
@@ -3200,12 +3123,6 @@ void Player::postRemoveNotification(Thing* thing, const Cylinder* newParent, int
 		//calling movement scripts
 		g_moveEvents->onPlayerDeEquip(this, thing->getItem(), static_cast<slots_t>(index));
 		g_events->eventPlayerOnInventoryUpdate(this, thing->getItem(), static_cast<slots_t>(index), false);
-		if (isInventorySlot(static_cast<slots_t>(index))) {
-			Item* item = thing->getItem();
-			if (item && item->hasImbuements()) {
-				removeItemImbuements(thing->getItem());
-			}
-		}
 	}
 
 	bool requireListUpdate = false;
@@ -3422,8 +3339,7 @@ void Player::doAttacking(uint32_t)
 		if (!classicSpeed) {
 			setNextActionTask(task, false);
 		} else {
-			g_scheduler.stopEvent(classicAttackEvent);
-			classicAttackEvent = g_scheduler.addEvent(task);
+			g_scheduler.addEvent(task);
 		}
 
 		if (result) {
@@ -3523,7 +3439,7 @@ void Player::onAddCondition(ConditionType_t type)
 {
 	Creature::onAddCondition(type);
 	
-	if (type == CONDITION_OUTFIT) {
+	if (type == CONDITION_OUTFIT && isMounted()) {
 		dismount();
 	}
 	sendIcons();
@@ -3875,25 +3791,25 @@ bool Player::canWear(uint32_t lookType, uint8_t addons) const
 		return true;
 	}
 
-	const Outfit* outfitPtr = Outfits::getInstance().getOutfitByLookType(sex, lookType);
-	if (!outfitPtr) {
+	const Outfit* outfit = Outfits::getInstance().getOutfitByLookType(sex, lookType);
+	if (!outfit) {
 		return false;
 	}
 
-	if (outfitPtr->premium && !isPremium()) {
+	if (outfit->premium && !isPremium()) {
 		return false;
 	}
 
-	if (outfitPtr->unlocked && addons == 0) {
+	if (outfit->unlocked && addons == 0) {
 		return true;
 	}
 
-	for (auto& [currentOutfit, addon] : outfits) {
-		if (currentOutfit == lookType) {
-			if (addon == addons || addon == 3 || addons == 0) {
+	for (const OutfitEntry& outfitEntry : outfits) {
+		if (outfitEntry.lookType == lookType) {
+			if (outfitEntry.addons == addons || outfitEntry.addons == 3 || addons == 0) {
 				return true;
 			}
-			return false; // tiene lookType en la lista y los addons no coinciden
+			return false; //have lookType on list and addons don't match
 		}
 	}
 	return false;
@@ -3901,42 +3817,52 @@ bool Player::canWear(uint32_t lookType, uint8_t addons) const
 
 bool Player::hasOutfit(uint32_t lookType, uint8_t addons)
 {
-	const Outfit* outfitPtr = Outfits::getInstance().getOutfitByLookType(sex, lookType);
-	if (!outfitPtr) {
+	const Outfit* outfit = Outfits::getInstance().getOutfitByLookType(sex, lookType);
+	if (!outfit) {
 		return false;
 	}
 
-	if (outfitPtr->unlocked && addons == 0) {
+	if (outfit->unlocked && addons == 0) {
 		return true;
 	}
 
-	for (auto& [currentOutfit, addon] : outfits) {
-		if (currentOutfit == lookType) {
-			if (addon == addons || addon == 3 || addons == 0) {
+	for (const OutfitEntry& outfitEntry : outfits) {
+		if (outfitEntry.lookType == lookType) {
+			if (outfitEntry.addons == addons || outfitEntry.addons == 3 || addons == 0){
 				return true;
 			}
-			return false; // tiene lookType en la lista y los addons no coinciden
+			return false; //have lookType on list and addons don't match
 		}
 	}
 	return false;
 }
 
+void Player::genReservedStorageRange()
+{
+	//generate outfits range
+	uint32_t base_key = PSTRG_OUTFITS_RANGE_START;
+	for (const OutfitEntry& entry : outfits) {
+		storageMap[++base_key] = (entry.lookType << 16) | entry.addons;
+	}
+}
+
 void Player::addOutfit(uint16_t lookType, uint8_t addons)
 {
-	for (auto& [outfit, addon] : outfits) {
-		if (outfit == lookType) {
-			addon |= addons;
+	for (OutfitEntry& outfitEntry : outfits) {
+		if (outfitEntry.lookType == lookType) {
+			outfitEntry.addons |= addons;
 			return;
 		}
 	}
-	outfits.insert(std::pair(lookType, addons));
+	outfits.emplace_back(lookType, addons);
 }
 
 bool Player::removeOutfit(uint16_t lookType)
 {
-	for (auto& [outfit, addon] : outfits) {
-		if (outfit == lookType) {
-			outfits.erase(outfit);
+	for (auto it = outfits.begin(), end = outfits.end(); it != end; ++it) {
+		OutfitEntry& entry = *it;
+		if (entry.lookType == lookType) {
+			outfits.erase(it);
 			return true;
 		}
 	}
@@ -3945,9 +3871,9 @@ bool Player::removeOutfit(uint16_t lookType)
 
 bool Player::removeOutfitAddon(uint16_t lookType, uint8_t addons)
 {
-	for (auto& [outfit, addon] : outfits) {
-		if (outfit == lookType) {
-			addon &= ~addons;
+	for (OutfitEntry& outfitEntry : outfits) {
+		if (outfitEntry.lookType == lookType) {
+			outfitEntry.addons &= ~addons;
 			return true;
 		}
 	}
@@ -3965,12 +3891,12 @@ bool Player::getOutfitAddons(const Outfit& outfit, uint8_t& addons) const
 		return false;
 	}
 
-	for (auto& [lookType, addon] : outfits) {
-		if (lookType != outfit.lookType) {
+	for (const OutfitEntry& outfitEntry : outfits) {
+		if (outfitEntry.lookType != outfit.lookType) {
 			continue;
 		}
 
-		addons = addon;
+		addons = outfitEntry.addons;
 		return true;
 	}
 
@@ -4252,8 +4178,7 @@ PartyShields_t Player::getPartyShield(const Player* player) const
 			return SHIELD_BLUE;
 		}
 
-		// isInviting(player) if members aren't supposed to see the invited player emblem
-		if (party->isPlayerInvited(player)) {
+		if (isInviting(player)) {
 			return SHIELD_WHITEBLUE;
 		}
 	}
@@ -4339,21 +4264,20 @@ GuildEmblems_t Player::getGuildEmblem(const Player* player) const
 	return GUILDEMBLEM_NEUTRAL;
 }
 
-/*uint16_t Player::getRandomMount() const
+
+uint8_t Player::getCurrentMount() const
 {
-	std::vector<uint16_t> mountsId;
-	for (const Mount& mount : g_game.mounts.getMounts()) {
-		if (hasMount(&mount)) {
-			mountsId.push_back(mount.id);
-		}
+	int32_t value;
+	if (getStorageValue(PSTRG_MOUNTS_CURRENTMOUNT, value)) {
+		return value;
 	}
+	return 0;
+}
 
-	return mountsId[uniform_random(0, mountsId.size() - 1)];
-}*/
-
-uint16_t Player::getCurrentMount() const { return currentMount; }
-
-void Player::setCurrentMount(uint16_t mountId) { currentMount = mountId; }
+void Player::setCurrentMount(uint8_t mountId)
+{
+	addStorageValue(PSTRG_MOUNTS_CURRENTMOUNT, mountId);
+}
 
 bool Player::toggleMount(bool mount)
 {
@@ -4377,15 +4301,11 @@ bool Player::toggleMount(bool mount)
 			return false;
 		}
 
-		uint16_t currentMountId = getCurrentMount();
+		uint8_t currentMountId = getCurrentMount();
 		if (currentMountId == 0) {
 			sendOutfitWindow();
 			return false;
 		}
-		
-		/*if (randomizeMount) {
-			currentMountId = getRandomMount();
-		}*/
 
 		Mount* currentMount = g_game.mounts.getMountByID(currentMountId);
 		if (!currentMount) {
@@ -4426,33 +4346,42 @@ bool Player::toggleMount(bool mount)
 	return true;
 }
 
-bool Player::tameMount(uint16_t mountId)
+bool Player::tameMount(uint8_t mountId)
 {
 	if (!g_game.mounts.getMountByID(mountId)) {
 		return false;
 	}
 
-	Mount* mount = g_game.mounts.getMountByID(mountId);
-	if (hasMount(mount)) {
-		return false;
+	const uint8_t tmpMountId = mountId - 1;
+	const uint32_t key = PSTRG_MOUNTS_RANGE_START + (tmpMountId / 31);
+
+	int32_t value;
+	if (getStorageValue(key, value)) {
+		value |= (1 << (tmpMountId % 31));
+	} else {
+		value = (1 << (tmpMountId % 31));
 	}
-	
-	mounts.insert(mountId);
+
+	addStorageValue(key, value);
 	return true;
 }
 
-bool Player::untameMount(uint16_t mountId)
+bool Player::untameMount(uint8_t mountId)
 {
 	if (!g_game.mounts.getMountByID(mountId)) {
 		return false;
 	}
 
-	Mount* mount = g_game.mounts.getMountByID(mountId);
-	if (!hasMount(mount)) {
-		return false;
+	const uint8_t tmpMountId = mountId - 1;
+	const uint32_t key = PSTRG_MOUNTS_RANGE_START + (tmpMountId / 31);
+
+	int32_t value;
+	if (!getStorageValue(key, value)) {
+		return true;
 	}
-	
-	mounts.erase(mountId);
+
+	value &= ~(1 << (tmpMountId % 31));
+	addStorageValue(key, value);
 
 	if (getCurrentMount() == mountId) {
 		if (isMounted()) {
@@ -4476,17 +4405,14 @@ bool Player::hasMount(const Mount* mount) const
 		return false;
 	}
 
-	return mounts.find(mount->id) != mounts.end();
-}
+	const uint8_t tmpMountId = mount->id - 1;
 
-bool Player::hasMounts() const
-{
-	for (const Mount& mount : g_game.mounts.getMounts()) {
-		if (hasMount(&mount)) {
-			return true;
-		}
+	int32_t value;
+	if (!getStorageValue(PSTRG_MOUNTS_RANGE_START + (tmpMountId / 31), value)) {
+		return false;
 	}
-	return false;
+
+	return ((1 << (tmpMountId % 31)) & value) != 0;
 }
 
 void Player::dismount()
@@ -4773,262 +4699,4 @@ void Player::updateRegeneration()
 		condition->setParam(CONDITION_PARAM_MANAGAIN, vocation->getManaGainAmount());
 		condition->setParam(CONDITION_PARAM_MANATICKS, vocation->getManaGainTicks() * 1000);
 	}
-}
-
-void Player::addItemImbuements(Item* item) {
-	if (item->hasImbuements()) {
-		const std::vector<std::shared_ptr<Imbuement>>& imbuementList = item->getImbuements();
-		for (auto& imbue : imbuementList) {
-			if (imbue->isSkill()) {
-				switch (imbue->imbuetype) {
-					case ImbuementType::IMBUEMENT_TYPE_FIST_SKILL:
-						setVarSkill(SKILL_FIST, static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_CLUB_SKILL:
-						setVarSkill(SKILL_CLUB, static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_SWORD_SKILL:
-						setVarSkill(SKILL_SWORD, static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_AXE_SKILL:
-						setVarSkill(SKILL_AXE, static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_DISTANCE_SKILL:
-						setVarSkill(SKILL_DISTANCE, static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_SHIELD_SKILL:
-						setVarSkill(SKILL_SHIELD, static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_FISHING_SKILL:
-						setVarSkill(SKILL_FISHING, static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_MAGIC_LEVEL:
-						setVarSkill(SKILL_MAGLEVEL, static_cast<int32_t>(imbue->value));
-						break;
-				}
-			}
-
-			if (imbue->isSpecialSkill()) {
-				switch (imbue->imbuetype) {
-					case ImbuementType::IMBUEMENT_TYPE_MANA_LEECH:
-						setVarSpecialSkill(SPECIALSKILL_MANALEECHAMOUNT, static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_LIFE_LEECH:
-						setVarSpecialSkill(SPECIALSKILL_LIFELEECHAMOUNT, static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_CRITICAL_CHANCE:
-						setVarSpecialSkill(SPECIALSKILL_CRITICALHITCHANCE, static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_CRITICAL_AMOUNT:
-						setVarSpecialSkill(SPECIALSKILL_CRITICALHITAMOUNT, static_cast<int32_t>(imbue->value));
-						break;
-				}
-			}
-
-			if (imbue->isStat()) {
-				switch (imbue->imbuetype) {
-					case ImbuementType::IMBUEMENT_TYPE_CAPACITY_BOOST:
-						capacity += imbue->value;
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_SPEED_BOOST:
-						g_game.changeSpeed(this, static_cast<int32_t>(imbue->value));
-						break;
-				}
-			}
-		}
-	}
-	sendSkills();
-	sendStats();
-}
-
-void Player::removeItemImbuements(Item* item) {
-	if (item->hasImbuements()) {
-		const std::vector<std::shared_ptr<Imbuement>>& imbuementList = item->getImbuements();
-		for (auto& imbue : imbuementList) {
-			if (imbue->isSkill()) {
-				switch (imbue->imbuetype) {
-					case ImbuementType::IMBUEMENT_TYPE_FIST_SKILL:
-						setVarSkill(SKILL_FIST, -static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_CLUB_SKILL:
-						setVarSkill(SKILL_CLUB, -static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_SWORD_SKILL:
-						setVarSkill(SKILL_SWORD, -static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_AXE_SKILL:
-						setVarSkill(SKILL_AXE, -static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_DISTANCE_SKILL:
-						setVarSkill(SKILL_DISTANCE, -static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_SHIELD_SKILL:
-						setVarSkill(SKILL_SHIELD, -static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_FISHING_SKILL:
-						setVarSkill(SKILL_FISHING, -static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_MAGIC_LEVEL:
-						setVarSkill(SKILL_MAGLEVEL, -static_cast<int32_t>(imbue->value));
-						break;
-				}
-			}
-
-			if (imbue->isSpecialSkill()) {
-				switch (imbue->imbuetype) {
-					case ImbuementType::IMBUEMENT_TYPE_MANA_LEECH:
-						setVarSpecialSkill(SPECIALSKILL_MANALEECHAMOUNT, -static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_LIFE_LEECH:
-						setVarSpecialSkill(SPECIALSKILL_LIFELEECHAMOUNT, -static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_CRITICAL_CHANCE:
-						setVarSpecialSkill(SPECIALSKILL_CRITICALHITCHANCE, -static_cast<int32_t>(imbue->value));
-						break;
-					case ImbuementType::IMBUEMENT_TYPE_CRITICAL_AMOUNT:
-						setVarSpecialSkill(SPECIALSKILL_CRITICALHITAMOUNT, -static_cast<int32_t>(imbue->value));
-						break;
-				}
-			}
-
-			if (imbue->isStat()) {
-				switch (imbue->imbuetype) {
-				case ImbuementType::IMBUEMENT_TYPE_CAPACITY_BOOST:
-					capacity -= imbue->value;
-					break;
-				case ImbuementType::IMBUEMENT_TYPE_SPEED_BOOST:
-					g_game.changeSpeed(this, -static_cast<int32_t>(imbue->value));
-					break;
-				}
-			}
-		}
-	}
-	sendSkills();
-	sendStats();
-}
-
-void Player::removeImbuementEffect(std::shared_ptr<Imbuement> imbue) {
-
-
-	if (imbue->isSkill()) {
-		switch (imbue->imbuetype) {
-		case ImbuementType::IMBUEMENT_TYPE_FIST_SKILL:
-			setVarSkill(SKILL_FIST, -static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_CLUB_SKILL:
-			setVarSkill(SKILL_CLUB, -static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_SWORD_SKILL:
-			setVarSkill(SKILL_SWORD, -static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_AXE_SKILL:
-			setVarSkill(SKILL_AXE, -static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_DISTANCE_SKILL:
-			setVarSkill(SKILL_DISTANCE, -static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_SHIELD_SKILL:
-			setVarSkill(SKILL_SHIELD, -static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_FISHING_SKILL:
-			setVarSkill(SKILL_FISHING, -static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_MAGIC_LEVEL:
-			setVarSkill(SKILL_MAGLEVEL, -static_cast<int32_t>(imbue->value));
-			break;
-		}
-	}
-
-	if (imbue->isSpecialSkill()) {
-		switch (imbue->imbuetype) {
-		case ImbuementType::IMBUEMENT_TYPE_MANA_LEECH:
-			setVarSpecialSkill(SPECIALSKILL_MANALEECHAMOUNT, -static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_LIFE_LEECH:
-			setVarSpecialSkill(SPECIALSKILL_LIFELEECHAMOUNT, -static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_CRITICAL_CHANCE:
-			setVarSpecialSkill(SPECIALSKILL_CRITICALHITCHANCE, -static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_CRITICAL_AMOUNT:
-			setVarSpecialSkill(SPECIALSKILL_CRITICALHITAMOUNT, -static_cast<int32_t>(imbue->value));
-			break;
-		}
-	}
-
-	if (imbue->isStat()) {
-		switch (imbue->imbuetype) {
-		case ImbuementType::IMBUEMENT_TYPE_CAPACITY_BOOST:
-			capacity -= imbue->value;
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_SPEED_BOOST:
-			g_game.changeSpeed(this, -static_cast<int32_t>(imbue->value));
-			break;
-		}
-	}
-	sendSkills();
-	sendStats();
-}
-
-void Player::addImbuementEffect(std::shared_ptr<Imbuement> imbue) {
-
-
-	if (imbue->isSkill()) {
-		switch (imbue->imbuetype) {
-		case ImbuementType::IMBUEMENT_TYPE_FIST_SKILL:
-			setVarSkill(SKILL_FIST, static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_CLUB_SKILL:
-			setVarSkill(SKILL_CLUB, static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_SWORD_SKILL:
-			setVarSkill(SKILL_SWORD, static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_AXE_SKILL:
-			setVarSkill(SKILL_AXE, static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_DISTANCE_SKILL:
-			setVarSkill(SKILL_DISTANCE, static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_SHIELD_SKILL:
-			setVarSkill(SKILL_SHIELD, static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_FISHING_SKILL:
-			setVarSkill(SKILL_FISHING, static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_MAGIC_LEVEL:
-			setVarSkill(SKILL_MAGLEVEL, static_cast<int32_t>(imbue->value));
-			break;
-		}
-	}
-
-	if (imbue->isSpecialSkill()) {
-		switch (imbue->imbuetype) {
-		case ImbuementType::IMBUEMENT_TYPE_MANA_LEECH:
-			setVarSpecialSkill(SPECIALSKILL_MANALEECHAMOUNT, static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_LIFE_LEECH:
-			setVarSpecialSkill(SPECIALSKILL_LIFELEECHAMOUNT, static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_CRITICAL_CHANCE:
-			setVarSpecialSkill(SPECIALSKILL_CRITICALHITCHANCE, static_cast<int32_t>(imbue->value));
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_CRITICAL_AMOUNT:
-			setVarSpecialSkill(SPECIALSKILL_CRITICALHITAMOUNT, static_cast<int32_t>(imbue->value));
-			break;
-		}
-	}
-
-	if (imbue->isStat()) {
-		switch (imbue->imbuetype) {
-		case ImbuementType::IMBUEMENT_TYPE_CAPACITY_BOOST:
-			capacity += imbue->value;
-			break;
-		case ImbuementType::IMBUEMENT_TYPE_SPEED_BOOST:
-			g_game.changeSpeed(this, static_cast<int32_t>(imbue->value));
-			break;
-		}
-	}
-	sendSkills();
-	sendStats();
 }

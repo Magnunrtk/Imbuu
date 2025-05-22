@@ -1106,14 +1106,6 @@ void Tile::removeThing(Thing* thing, uint32_t count)
 	}
 }
 
-bool Tile::hasCreature(Creature* creature) const
-{
-	if (const CreatureVector* creatures = getCreatures()) {
-		return std::find(creatures->begin(), creatures->end(), creature) != creatures->end();
-	}
-	return false;
-}
-
 void Tile::removeCreature(Creature* creature)
 {
 	g_game.map.getQTNode(tilePos.x, tilePos.y)->removeCreature(creature);
@@ -1215,13 +1207,13 @@ int32_t Tile::getStackposOfItem(const Player* player, const Item* item) const
 			for (auto it = items->getBeginTopItem(), end = items->getEndTopItem(); it != end; ++it) {
 				if (*it == item) {
 					return n;
-				} else if (++n == MAX_STACKPOS) {
+				} else if (++n == 10) {
 					return -1;
 				}
 			}
 		} else {
 			n += items->getTopItemCount();
-			if (n >= MAX_STACKPOS) {
+			if (n >= 10) {
 				return -1;
 			}
 		}
@@ -1230,7 +1222,7 @@ int32_t Tile::getStackposOfItem(const Player* player, const Item* item) const
 	if (const CreatureVector* creatures = getCreatures()) {
 		for (const Creature* creature : *creatures) {
 			if (player->canSeeCreature(creature)) {
-				if (++n >= MAX_STACKPOS) {
+				if (++n >= 10) {
 					return -1;
 				}
 			}
@@ -1241,7 +1233,7 @@ int32_t Tile::getStackposOfItem(const Player* player, const Item* item) const
 		for (auto it = items->getBeginDownItem(), end = items->getEndDownItem(); it != end; ++it) {
 			if (*it == item) {
 				return n;
-			} else if (++n >= MAX_STACKPOS) {
+			} else if (++n >= 10) {
 				return -1;
 			}
 		}
@@ -1577,28 +1569,13 @@ bool Tile::isMoveableBlocking() const
 Item* Tile::getUseItem(int32_t index) const
 {
 	const TileItemVector* items = getItemList();
-	
 	if (!items || items->size() == 0) {
 		return ground;
 	}
 
 	if (Thing* thing = getThing(index)) {
-		Item* thingItem = thing->getItem();
-		if (thingItem) {
-			return thingItem;
-		}
+		return thing->getItem();
 	}
 
-	Item* topDownItem = getTopDownItem();
-	if (topDownItem) {
-		return topDownItem;
-	}
-
-	for (auto it = items->rbegin(), end = items->rend(); it != end; ++it) {
-		if ((*it)->getDoor()) {
-			return (*it)->getItem();
-		}
-	}
-
-	return *items->begin();
+	return nullptr;
 }

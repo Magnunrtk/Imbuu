@@ -29,7 +29,6 @@
 #include "actions.h"
 #include "game.h"
 #include "iologindata.h"
-#include "iomarket.h"
 #include "ban.h"
 #include "scheduler.h"
 #include "monster.h"
@@ -622,6 +621,7 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 		case 0xCA: parseUpdateContainer(msg); break;
 		case 0xD2: addGameTask(&Game::playerRequestOutfit, player->getID()); break;
 		case 0xD3: parseSetOutfit(msg); break;
+		case 0xD4: parseToggleMount(msg); break;
 		case 0xDC: parseAddVip(msg); break;
 		case 0xDD: parseRemoveVip(msg); break;
 		case 0xE6: parseBugReport(msg); break;
@@ -629,11 +629,6 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 		case 0xE8: parseDebugAssert(msg); break;
 		case 0xF2: parseRuleViolationReport(msg); break;
 		case 0xF3: /* get object info */ break;
-		case 0xF4: parseMarketLeave(); break;
-		case 0xF5: parseMarketBrowse(msg); break;
-		case 0xF6: parseMarketCreateOffer(msg); break;
-		case 0xF7: parseMarketCancelOffer(msg); break;
-		case 0xF8: parseMarketAcceptOffer(msg); break;
 		case 0xF9: parseModalWindowAnswer(msg); break;
 
 		default:
@@ -653,7 +648,6 @@ void ProtocolGame::GetTileDescription(const Tile* tile, NetworkMessage& msg)
 {
 	int32_t count;
 	Item* ground = tile->getGround();
-	
 	if (ground) {
 		msg.addItem(ground);
 		count = 1;
@@ -664,9 +658,9 @@ void ProtocolGame::GetTileDescription(const Tile* tile, NetworkMessage& msg)
 	const TileItemVector* items = tile->getItemList();
 	if (items) {
 		for (auto it = items->getBeginTopItem(), end = items->getEndTopItem(); it != end; ++it) {
-			msg.addItem(*it);
+			msg.addItem(*it, player);
 
-			if (++count == MAX_STACKPOS) {
+			if (++count == 10) {
 				break;
 			}
 		}
@@ -688,11 +682,11 @@ void ProtocolGame::GetTileDescription(const Tile* tile, NetworkMessage& msg)
 		}
 	}
 
-	if (items && count < MAX_STACKPOS) {
+	if (items && count < 10) {
 		for (auto it = items->getBeginDownItem(), end = items->getEndDownItem(); it != end; ++it) {
-			msg.addItem(*it);
+			msg.addItem(*it, player);
 
-			if (++count == MAX_STACKPOS) {
+			if (++count == 10) {
 				return;
 			}
 		}
@@ -876,15 +870,15 @@ void ProtocolGame::parseAutoWalk(NetworkMessage& msg)
 	for (uint8_t i = 0; i < numdirs; ++i) {
 		uint8_t rawdir = msg.getPreviousByte();
 		switch (rawdir) {
-		case 1: path.push_back(DIRECTION_EAST); break;
-		case 2: path.push_back(DIRECTION_NORTHEAST); break;
-		case 3: path.push_back(DIRECTION_NORTH); break;
-		case 4: path.push_back(DIRECTION_NORTHWEST); break;
-		case 5: path.push_back(DIRECTION_WEST); break;
-		case 6: path.push_back(DIRECTION_SOUTHWEST); break;
-		case 7: path.push_back(DIRECTION_SOUTH); break;
-		case 8: path.push_back(DIRECTION_SOUTHEAST); break;
-		default: break;
+			case 1: path.push_back(DIRECTION_EAST); break;
+			case 2: path.push_back(DIRECTION_NORTHEAST); break;
+			case 3: path.push_back(DIRECTION_NORTH); break;
+			case 4: path.push_back(DIRECTION_NORTHWEST); break;
+			case 5: path.push_back(DIRECTION_WEST); break;
+			case 6: path.push_back(DIRECTION_SOUTHWEST); break;
+			case 7: path.push_back(DIRECTION_SOUTH); break;
+			case 8: path.push_back(DIRECTION_SOUTHEAST); break;
+			default: break;
 		}
 	}
 
@@ -904,11 +898,14 @@ void ProtocolGame::parseSetOutfit(NetworkMessage& msg)
 	newOutfit.lookLegs = msg.getByte();
 	newOutfit.lookFeet = msg.getByte();
 	newOutfit.lookAddons = msg.getByte();
-	if (otclientV8) {
-		newOutfit.lookMount = msg.get<uint16_t>();
-	}
-	//bool randomizeMount = msg.getByte() == 0x01;
+	newOutfit.lookMount = msg.get<uint16_t>();
 	addGameTask(&Game::playerChangeOutfit, player->getID(), newOutfit);
+}
+
+void ProtocolGame::parseToggleMount(NetworkMessage& msg)
+{
+	bool mount = msg.getByte() != 0;
+	addGameTask(&Game::playerToggleMount, player->getID(), mount);
 }
 
 void ProtocolGame::parseUseItem(NetworkMessage& msg)
@@ -1194,49 +1191,6 @@ void ProtocolGame::parseEnableSharedPartyExperience(NetworkMessage& msg)
 	addGameTask(&Game::playerEnableSharedPartyExperience, player->getID(), sharedExpActive);
 }
 
-void ProtocolGame::parseMarketLeave()
-{
-	addGameTask(&Game::playerLeaveMarket, player->getID());
-}
-
-void ProtocolGame::parseMarketBrowse(NetworkMessage& msg)
-{
-	uint16_t browseId = msg.get<uint16_t>();
-
-	if (browseId == MARKETREQUEST_OWN_OFFERS) {
-		addGameTask(&Game::playerBrowseMarketOwnOffers, player->getID());
-	} else if (browseId == MARKETREQUEST_OWN_HISTORY) {
-		addGameTask(&Game::playerBrowseMarketOwnHistory, player->getID());
-	} else {
-		addGameTask(&Game::playerBrowseMarket, player->getID(), browseId);
-	}
-}
-
-void ProtocolGame::parseMarketCreateOffer(NetworkMessage& msg)
-{
-	uint8_t type = msg.getByte();
-	uint16_t spriteId = msg.get<uint16_t>();
-	uint16_t amount = msg.get<uint16_t>();
-	uint32_t price = msg.get<uint32_t>();
-	bool anonymous = (msg.getByte() != 0);
-	addGameTask(&Game::playerCreateMarketOffer, player->getID(), type, spriteId, amount, price, anonymous);
-}
-
-void ProtocolGame::parseMarketCancelOffer(NetworkMessage& msg)
-{
-	uint32_t timestamp = msg.get<uint32_t>();
-	uint16_t counter = msg.get<uint16_t>();
-	addGameTask(&Game::playerCancelMarketOffer, player->getID(), timestamp, counter);
-}
-
-void ProtocolGame::parseMarketAcceptOffer(NetworkMessage& msg)
-{
-	uint32_t timestamp = msg.get<uint32_t>();
-	uint16_t counter = msg.get<uint16_t>();
-	uint16_t amount = msg.get<uint16_t>();
-	addGameTask(&Game::playerAcceptMarketOffer, player->getID(), timestamp, counter, amount);
-}
-
 void ProtocolGame::parseModalWindowAnswer(NetworkMessage& msg)
 {
 	uint32_t id = msg.get<uint32_t>();
@@ -1375,10 +1329,15 @@ void ProtocolGame::sendStats()
 
 void ProtocolGame::sendTextMessage(const TextMessage& message)
 {
+	TextMessage tmp = message; // Faz uma cópia modificável
+
+	if ((int)tmp.type < 18 || (int)tmp.type > 27)
+		tmp.type = MESSAGE_STATUS_CONSOLE_RED;
+
 	NetworkMessage msg;
 	msg.addByte(0xB4);
-	msg.addByte(message.type);
-	msg.addString(message.text);
+	msg.addByte(tmp.type);
+	msg.addString(tmp.text);
 	writeToOutputBuffer(msg);
 }
 
@@ -1595,442 +1554,6 @@ void ProtocolGame::sendSaleItemList(const std::list<ShopInfo>& shop)
 	writeToOutputBuffer(msg);
 }
 
-void ProtocolGame::sendMarketEnter()
-{
-	NetworkMessage msg;
-	msg.addByte(0xF6);
-
-	msg.add<uint64_t>(player->getBankBalance());
-	msg.addByte(std::min<uint32_t>(IOMarket::getPlayerOfferCount(player->getGUID()), std::numeric_limits<uint8_t>::max()));
-	
-	player->setInMarket(true);
-
-	std::map<uint16_t, uint32_t> depotItems;
-	std::forward_list<Container*> containerList{player->getInbox()};
-	
-	for (const auto& chest : player->depotChests) {
-		std::shared_ptr<DepotChest> depotChest = chest.second;
-		Container* container = dynamic_cast<Container*>(depotChest.get());
-		if (!container->empty()) {
-			containerList.push_front(container);
-		}
-	}
-
-	do {
-		Container* container = containerList.front();
-		containerList.pop_front();
-
-		for (Item* item : container->getItemList()) {
-			Container* containerItem = item->getContainer();
-			if (containerItem && !containerItem->empty()) {
-				containerList.push_front(containerItem);
-				continue;
-			}
-
-			const ItemType& itemType = Item::items[item->getID()];
-			if (itemType.wareId == 0) {
-				continue;
-			}
-
-			if (containerItem && (!itemType.isContainer() || containerItem->capacity() != itemType.maxItems)) {
-				continue;
-			}
-
-			if (!item->hasMarketAttributes()) {
-				continue;
-			}
-
-			depotItems[itemType.id] += Item::countByType(item, -1);
-		}
-	} while (!containerList.empty());
-
-	uint16_t itemsToSend = std::min<size_t>(depotItems.size(), std::numeric_limits<uint16_t>::max());
-	uint16_t i = 0;
-
-	msg.add<uint16_t>(itemsToSend);
-	for (std::map<uint16_t, uint32_t>::const_iterator it = depotItems.begin(); i < itemsToSend; ++it, ++i) {
-		const ItemType& itemType = Item::items[it->first];
-		msg.add<uint16_t>(itemType.wareId);
-		if (itemType.classification > 0) {
-			msg.addByte(0);
-		}
-		msg.add<uint16_t>(std::min<uint32_t>(0xFFFF, it->second));
-	}
-	writeToOutputBuffer(msg);
-}
-
-void ProtocolGame::sendMarketBrowseItem(uint16_t itemId, const MarketOfferList& buyOffers,
-                                        const MarketOfferList& sellOffers)
-{
-	NetworkMessage msg;
-	
-	msg.addByte(0xF9);
-	msg.addItemId(itemId);
-
-	if (Item::items[itemId].classification > 0) {
-		msg.addByte(0); // item tier
-	}
-
-	msg.add<uint32_t>(buyOffers.size());
-	for (const MarketOffer& offer : buyOffers) {
-		msg.add<uint32_t>(offer.timestamp);
-		msg.add<uint16_t>(offer.counter);
-		msg.add<uint16_t>(offer.amount);
-		msg.add<uint64_t>(offer.price);
-		msg.addString(offer.playerName);
-	}
-
-	msg.add<uint32_t>(sellOffers.size());
-	for (const MarketOffer& offer : sellOffers) {
-		msg.add<uint32_t>(offer.timestamp);
-		msg.add<uint16_t>(offer.counter);
-		msg.add<uint16_t>(offer.amount);
-		msg.add<uint64_t>(offer.price);
-		msg.addString(offer.playerName);
-	}
-
-	writeToOutputBuffer(msg);
-}
-
-void ProtocolGame::sendMarketAcceptOffer(const MarketOfferEx& offer)
-{
-	NetworkMessage msg;
-	msg.addByte(0xF9);
-	msg.addItemId(offer.itemId);
-	
-	if (Item::items[offer.itemId].classification > 0) {
-		msg.addByte(0);
-	}
-
-	if (offer.type == MARKETACTION_BUY) {
-		msg.add<uint32_t>(0x01);
-		msg.add<uint32_t>(offer.timestamp);
-		msg.add<uint16_t>(offer.counter);
-		msg.add<uint16_t>(offer.amount);
-		msg.add<uint64_t>(offer.price);
-		msg.addString(offer.playerName);
-		msg.add<uint32_t>(0x00);
-	} else {
-		msg.add<uint32_t>(0x00);
-		msg.add<uint32_t>(0x01);
-		msg.add<uint32_t>(offer.timestamp);
-		msg.add<uint16_t>(offer.counter);
-		msg.add<uint16_t>(offer.amount);
-		msg.add<uint64_t>(offer.price);
-		msg.addString(offer.playerName);
-	}
-
-	writeToOutputBuffer(msg);
-}
-
-void ProtocolGame::sendMarketBrowseOwnOffers(const MarketOfferList& buyOffers, const MarketOfferList& sellOffers)
-{
-	NetworkMessage msg;
-	msg.addByte(0xF9);
-	msg.add<uint16_t>(MARKETREQUEST_OWN_OFFERS);
-
-	msg.add<uint32_t>(buyOffers.size());
-	for (const MarketOffer& offer : buyOffers) {
-		msg.add<uint32_t>(offer.timestamp);
-		msg.add<uint16_t>(offer.counter);
-		msg.addItemId(offer.itemId);
-		if (Item::items[offer.itemId].classification > 0) {
-			msg.addByte(0);
-		}
-		msg.add<uint16_t>(offer.amount);
-		msg.add<uint32_t>(offer.price);
-	}
-
-	msg.add<uint32_t>(sellOffers.size());
-	for (const MarketOffer& offer : sellOffers) {
-		msg.add<uint32_t>(offer.timestamp);
-		msg.add<uint16_t>(offer.counter);
-		msg.addItemId(offer.itemId);
-		if (Item::items[offer.itemId].classification > 0) {
-			msg.addByte(0);
-		}
-		msg.add<uint16_t>(offer.amount);
-		msg.add<uint32_t>(offer.price);
-	}
-
-	writeToOutputBuffer(msg);
-}
-
-void ProtocolGame::sendMarketCancelOffer(const MarketOfferEx& offer)
-{
-	NetworkMessage msg;
-	msg.addByte(0xF9);
-	msg.add<uint16_t>(MARKETREQUEST_OWN_OFFERS);
-
-	if (offer.type == MARKETACTION_BUY) {
-		msg.add<uint32_t>(0x01);
-		msg.add<uint32_t>(offer.timestamp);
-		msg.add<uint16_t>(offer.counter);
-		msg.addItemId(offer.itemId);
-		if (Item::items[offer.itemId].classification > 0) {
-			msg.addByte(0);
-		}
-		msg.add<uint16_t>(offer.amount);
-		msg.add<uint32_t>(offer.price);
-		msg.add<uint32_t>(0x00);
-	} else {
-		msg.add<uint32_t>(0x00);
-		msg.add<uint32_t>(0x01);
-		msg.add<uint32_t>(offer.timestamp);
-		msg.add<uint16_t>(offer.counter);
-		msg.addItemId(offer.itemId);
-		if (Item::items[offer.itemId].classification > 0) {
-			msg.addByte(0);
-		}
-		msg.add<uint16_t>(offer.amount);
-		msg.add<uint32_t>(offer.price);
-	}
-
-	writeToOutputBuffer(msg);
-}
-
-void ProtocolGame::sendMarketBrowseOwnHistory(const HistoryMarketOfferList& buyOffers, const HistoryMarketOfferList& sellOffers)
-{
-	uint32_t i = 0;
-	std::map<uint32_t, uint16_t> counterMap;
-	uint32_t buyOffersToSend = std::min<uint32_t>(buyOffers.size(), 810 + std::max<int32_t>(0, 810 - sellOffers.size()));
-	uint32_t sellOffersToSend = std::min<uint32_t>(sellOffers.size(), 810 + std::max<int32_t>(0, 810 - buyOffers.size()));
-
-	NetworkMessage msg;
-	msg.addByte(0xF9);
-	msg.add<uint16_t>(MARKETREQUEST_OWN_HISTORY);
-
-	msg.add<uint32_t>(buyOffersToSend);
-	for (auto it = buyOffers.begin(); i < buyOffersToSend; ++it, ++i) {
-		msg.add<uint32_t>(it->timestamp);
-		msg.add<uint16_t>(counterMap[it->timestamp]++);
-		msg.addItemId(it->itemId);
-		if (Item::items[it->itemId].classification > 0) {
-			msg.addByte(0);
-		}
-		msg.add<uint16_t>(it->amount);
-		msg.add<uint32_t>(it->price);
-		msg.addByte(it->state);
-	}
-
-	counterMap.clear();
-	i = 0;
-
-	msg.add<uint32_t>(sellOffersToSend);
-	for (auto it = sellOffers.begin(); i < sellOffersToSend; ++it, ++i) {
-		msg.add<uint32_t>(it->timestamp);
-		msg.add<uint16_t>(counterMap[it->timestamp]++);
-		msg.addItemId(it->itemId);
-		if (Item::items[it->itemId].classification > 0) {
-			msg.addByte(0);
-		}
-		msg.add<uint16_t>(it->amount);
-		msg.add<uint32_t>(it->price);
-		msg.addByte(it->state);
-	}
-
-	writeToOutputBuffer(msg);
-}
-
-void ProtocolGame::sendMarketDetail(uint16_t itemId)
-{
-	NetworkMessage msg;
-	msg.addByte(0xF8);
-	msg.addItemId(itemId);
-
-	const ItemType& it = Item::items[itemId];
-	if (it.armor != 0) {
-		msg.addString(std::to_string(it.armor));
-	} else {
-		msg.add<uint16_t>(0x00);
-	}
-
-	if (it.attack != 0) {
-		// TODO: chance to hit, range
-		// example:
-		// "attack +x, chance to hit +y%, z fields"
-		if (it.abilities && it.abilities->elementType != COMBAT_NONE && it.abilities->elementDamage != 0) {
-			msg.addString(fmt::format("{:d} physical +{:d} {:s}", it.attack, it.abilities->elementDamage, getCombatName(it.abilities->elementType)));
-		} else {
-			msg.addString(std::to_string(it.attack));
-		}
-	} else {
-		msg.add<uint16_t>(0x00);
-	}
-
-	if (it.isContainer()) {
-		msg.addString(std::to_string(it.maxItems));
-	} else {
-		msg.add<uint16_t>(0x00);
-	}
-
-	if (it.defense != 0) {
-		if (it.extraDefense != 0) {
-			msg.addString(fmt::format("{:d} {:+d}", it.defense, it.extraDefense));
-		} else {
-			msg.addString(std::to_string(it.defense));
-		}
-	} else {
-		msg.add<uint16_t>(0x00);
-	}
-
-	if (!it.description.empty()) {
-		const std::string& descr = it.description;
-		if (descr.back() == '.') {
-			msg.addString(std::string(descr, 0, descr.length() - 1));
-		} else {
-			msg.addString(descr);
-		}
-	} else {
-		msg.add<uint16_t>(0x00);
-	}
-
-	if (it.decayTime != 0) {
-		msg.addString(fmt::format("{:d} seconds", it.decayTime));
-	} else {
-		msg.add<uint16_t>(0x00);
-	}
-
-	if (it.abilities) {
-		std::ostringstream ss;
-		bool separator = false;
-
-		for (size_t i = 0; i < COMBAT_COUNT; ++i) {
-			if (it.abilities->absorbPercent[i] == 0) {
-				continue;
-			}
-
-			if (separator) {
-				ss << ", ";
-			} else {
-				separator = true;
-			}
-
-			ss << getCombatName(indexToCombatType(i)) << ' ' << std::showpos << it.abilities->absorbPercent[i] << std::noshowpos << '%';
-		}
-
-		msg.addString(ss.str());
-	} else {
-		msg.add<uint16_t>(0x00);
-	}
-
-	if (it.minReqLevel != 0) {
-		msg.addString(std::to_string(it.minReqLevel));
-	} else {
-		msg.add<uint16_t>(0x00);
-	}
-
-	if (it.minReqMagicLevel != 0) {
-		msg.addString(std::to_string(it.minReqMagicLevel));
-	} else {
-		msg.add<uint16_t>(0x00);
-	}
-
-	msg.addString(it.vocationString);
-
-	msg.addString(it.runeSpellName);
-
-	if (it.abilities) {
-		std::ostringstream ss;
-		bool separator = false;
-
-		for (uint8_t i = SKILL_FIRST; i <= SKILL_LAST; i++) {
-			if (!it.abilities->skills[i]) {
-				continue;
-			}
-
-			if (separator) {
-				ss << ", ";
-			} else {
-				separator = true;
-			}
-
-			ss << getSkillName(i) << ' ' << std::showpos << it.abilities->skills[i] << std::noshowpos;
-		}
-
-		if (it.abilities->stats[STAT_MAGICPOINTS] != 0) {
-			if (separator) {
-				ss << ", ";
-			} else {
-				separator = true;
-			}
-
-			ss << "magic level " << std::showpos << it.abilities->stats[STAT_MAGICPOINTS] << std::noshowpos;
-		}
-
-		if (it.abilities->speed != 0) {
-			if (separator) {
-				ss << ", ";
-			}
-
-			ss << "speed " << std::showpos << (it.abilities->speed >> 1) << std::noshowpos;
-		}
-
-		msg.addString(ss.str());
-	} else {
-		msg.add<uint16_t>(0x00);
-	}
-
-	if (it.charges != 0) {
-		msg.addString(std::to_string(it.charges));
-	} else {
-		msg.add<uint16_t>(0x00);
-	}
-
-	std::string weaponName = getWeaponName(it.weaponType);
-
-	if (it.slotPosition & SLOTP_TWO_HAND) {
-		if (!weaponName.empty()) {
-			weaponName += ", two-handed";
-		} else {
-			weaponName = "two-handed";
-		}
-	}
-
-	msg.addString(weaponName);
-
-	if (it.weight != 0) {
-		std::ostringstream ss;
-		if (it.weight < 10) {
-			ss << "0.0" << it.weight;
-		} else if (it.weight < 100) {
-			ss << "0." << it.weight;
-		} else {
-			std::string weightString = std::to_string(it.weight);
-			weightString.insert(weightString.end() - 2, '.');
-			ss << weightString;
-		}
-		ss << " oz";
-		msg.addString(ss.str());
-	} else {
-		msg.add<uint16_t>(0x00);
-	}
-
-	MarketStatistics* statistics = IOMarket::getInstance().getPurchaseStatistics(itemId);
-	if (statistics) {
-		msg.addByte(0x01);
-		msg.add<uint32_t>(statistics->numTransactions);
-		msg.add<uint32_t>(std::min<uint64_t>(std::numeric_limits<uint32_t>::max(), statistics->totalPrice));
-		msg.add<uint32_t>(statistics->highestPrice);
-		msg.add<uint32_t>(statistics->lowestPrice);
-	} else {
-		msg.addByte(0x00);
-	}
-
-	statistics = IOMarket::getInstance().getSaleStatistics(itemId);
-	if (statistics) {
-		msg.addByte(0x01);
-		msg.add<uint32_t>(statistics->numTransactions);
-		msg.add<uint32_t>(std::min<uint64_t>(std::numeric_limits<uint32_t>::max(), statistics->totalPrice));
-		msg.add<uint32_t>(statistics->highestPrice);
-		msg.add<uint32_t>(statistics->lowestPrice);
-	} else {
-		msg.addByte(0x00);
-	}
-
-	writeToOutputBuffer(msg);
-}
-
 void ProtocolGame::sendTradeItemRequest(const std::string& traderName, const Item* item, bool ack)
 {
 	NetworkMessage msg;
@@ -2085,7 +1608,7 @@ void ProtocolGame::sendCloseContainer(uint8_t cid)
 	writeToOutputBuffer(msg);
 }
 
-void ProtocolGame::sendCreatureTurn(const Creature* creature, uint32_t stackpos)
+void ProtocolGame::sendCreatureTurn(const Creature* creature, uint32_t stackPos)
 {
 	if (!canSee(creature)) {
 		return;
@@ -2093,12 +1616,12 @@ void ProtocolGame::sendCreatureTurn(const Creature* creature, uint32_t stackpos)
 
 	NetworkMessage msg;
 	msg.addByte(0x6B);
-	if (stackpos >= MAX_STACKPOS) {
+	if (stackPos >= 10) {
 		msg.add<uint16_t>(0xFFFF);
 		msg.add<uint32_t>(creature->getID());
 	} else {
 		msg.addPosition(creature->getPosition());
-		msg.addByte(stackpos);
+		msg.addByte(stackPos);
 	}
 
 	msg.add<uint16_t>(0x63);
@@ -2337,7 +1860,7 @@ void ProtocolGame::sendUpdateTileCreature(const Position& pos, uint32_t stackpos
 
 void ProtocolGame::sendRemoveTileCreature(const Creature* creature, const Position& pos, uint32_t stackpos)
 {
-	if (stackpos < MAX_STACKPOS) {
+	if (stackpos < 10) {
 		if (!canSee(pos)) {
 			return;
 		}
@@ -2398,9 +1921,9 @@ void ProtocolGame::sendAddCreature(const Creature* creature, const Position& pos
 		// if stack pos exceeds the limit, we need to refresh the tile instead
 		// 1. this is a rare case, and is only triggered by forcing summon in a position
 		// 2. since no stackpos will be send to the client about that creature, removing
-		// its stackpos remains >= MAX_STACKPOS. this is done to add creatures to battle list instead of rendering on
-		// screen
-		if (stackpos >= MAX_STACKPOS) {
+		//    it must be done with its id if its stackpos remains >= 10. this is done to
+		//    add creatures to battle list instead of rendering on screen
+		if (stackpos >= 10) {
 			// @todo: should we avoid this check?
 			if (const Tile* tile = creature->getTile()) {
 				sendUpdateTile(tile, pos);
@@ -2452,7 +1975,7 @@ void ProtocolGame::sendAddCreature(const Creature* creature, const Position& pos
 
 	sendStats();
 	sendSkills();
-	
+
 	//gameworld light-settings
 	sendWorldLight(g_game.getWorldLightInfo());
 
@@ -2481,7 +2004,7 @@ void ProtocolGame::sendMoveCreature(const Creature* creature, const Position& ne
 				RemoveTileCreature(msg, creature, oldPos, oldStackPos);
 			} else {
 				msg.addByte(0x6D);
-				if (oldStackPos < MAX_STACKPOS) {
+				if (oldStackPos < 10) {
 					msg.addPosition(oldPos);
 					msg.addByte(oldStackPos);
 				} else {
@@ -2521,7 +2044,7 @@ void ProtocolGame::sendMoveCreature(const Creature* creature, const Position& ne
 		} else {
 			NetworkMessage msg;
 			msg.addByte(0x6D);
-			if (oldStackPos < MAX_STACKPOS) {
+			if (oldStackPos < 10) {
 				msg.addPosition(oldPos);
 				msg.addByte(oldStackPos);
 			} else {
@@ -2685,23 +2208,20 @@ void ProtocolGame::sendOutfitWindow()
 		msg.addString(outfit.name);
 		msg.addByte(outfit.addons);
 	}
-
-	if (otclientV8) {
-		
-		std::vector<const Mount*> mounts;
-		for (const Mount& mount : g_game.mounts.getMounts()) {
-			if (player->hasMount(&mount)) {
-				mounts.push_back(&mount);
-			}
+	
+	std::vector<const Mount*> mounts;
+	for (const Mount& mount : g_game.mounts.getMounts()) {
+		if (player->hasMount(&mount)) {
+			mounts.push_back(&mount);
 		}
-
-		msg.addByte(mounts.size());
-		for (const Mount* mount : mounts) {
-			msg.add<uint16_t>(mount->clientId);
-			msg.addString(mount->name);
-		}
-		//msg.addByte(player->randomizeMount ? 0x01 : 0x00);
 	}
+
+	msg.addByte(mounts.size());
+	for (const Mount* mount : mounts) {
+		msg.add<uint16_t>(mount->clientId);
+		msg.addString(mount->name);
+	}
+
 
 	writeToOutputBuffer(msg);
 }
@@ -2879,10 +2399,7 @@ void ProtocolGame::AddOutfit(NetworkMessage& msg, const Outfit_t& outfit)
 	} else {
 		msg.addItemId(outfit.lookTypeEx);
 	}
-	
-	if (otclientV8) {
-		msg.add<uint16_t>(outfit.lookMount);
-	}
+	msg.add<uint16_t>(outfit.lookMount);
 }
 
 void ProtocolGame::AddWorldLight(NetworkMessage& msg, LightInfo lightInfo)
@@ -2905,7 +2422,7 @@ void ProtocolGame::AddCreatureLight(NetworkMessage& msg, const Creature* creatur
 //tile
 void ProtocolGame::RemoveTileThing(NetworkMessage& msg, const Position& pos, uint32_t stackpos)
 {
-	if (stackpos >= MAX_STACKPOS) {
+	if (stackpos >= 10) {
 		return;
 	}
 
@@ -2916,7 +2433,7 @@ void ProtocolGame::RemoveTileThing(NetworkMessage& msg, const Position& pos, uin
 
 void ProtocolGame::RemoveTileCreature(NetworkMessage& msg, const Creature* creature, const Position& pos, uint32_t stackpos)
 {
-	if (stackpos < MAX_STACKPOS) {
+	if (stackpos < 10) {
 		RemoveTileThing(msg, pos, stackpos);
 		return;
 	}
@@ -3045,8 +2562,7 @@ void ProtocolGame::sendFeatures()
 
 	std::map<GameFeature, bool> features;
 	// place for non-standard OTCv8 features
-	features[GameExtendedOpcode] = false;
-	features[GamePlayerMounts] = true;
+	features[GameExtendedOpcode] = true;
 
 	if(features.empty())
 		return;

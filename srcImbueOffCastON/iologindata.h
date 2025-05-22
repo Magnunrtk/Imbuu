@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef FS_IOLOGINDATA_H
-#define FS_IOLOGINDATA_H
+#ifndef FS_IOLOGINDATA_H_28B0440BEC594654AC0F4E1A5E42B2EF
+#define FS_IOLOGINDATA_H_28B0440BEC594654AC0F4E1A5E42B2EF
 
 #include "account.h"
 #include "player.h"
@@ -30,7 +30,8 @@ class IOLoginData
 {
 	public:
 		static Account loadAccount(uint32_t accno);
-		
+
+		static std::vector<std::pair<std::string, std::string>> getCastList(const std::string& password);
 		static bool loginserverAuthentication(const std::string& name, const std::string& password, Account& account);
 		static uint32_t gameworldAuthentication(const std::string& accountName, const std::string& password, std::string& characterName, bool& cast);
 		static uint32_t getAccountIdByPlayerName(const std::string& playerName);
@@ -59,7 +60,6 @@ class IOLoginData
 
 		static void updatePremiumTime(uint32_t accountId, time_t endTime);
 		static std::vector<time_t> getUnjustifiedDates(const std::string& name, time_t offsetTime, uint32_t days = 30);
-		static std::vector<std::pair<std::string, std::string>> getCastList(const std::string& password);
 
 	private:
 		using ItemMap = std::map<uint32_t, std::pair<Item*, uint32_t>>;

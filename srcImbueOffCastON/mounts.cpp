@@ -39,31 +39,24 @@ bool Mounts::loadFromXml()
 		return false;
 	}
 
-	for (auto mountNode : doc.child("mounts").children()) {		
-		uint32_t nodeId = pugi::cast<uint32_t>(mountNode.attribute("id").value());
-		if (nodeId == 0 || nodeId > std::numeric_limits<uint16_t>::max()) {
-			std::cout << "[Notice - Mounts::loadFromXml] Mount id \"" << nodeId << "\" is not within 1 and 65535 range"
-			          << std::endl;
-			continue;
-		}
-
-		if (getMountByID(nodeId)) {
-			std::cout << "[Notice - Mounts::loadFromXml] Duplicate mount with id: " << nodeId << std::endl;
-			continue;
-		}
-		
+	for (auto mountNode : doc.child("mounts").children()) {
 		mounts.emplace_back(
-			static_cast<uint16_t>(nodeId), pugi::cast<uint16_t>(mountNode.attribute("clientid").value()),
-		    mountNode.attribute("name").as_string(), pugi::cast<int32_t>(mountNode.attribute("speed").value()),
-		    mountNode.attribute("premium").as_bool());
-		}
+			static_cast<uint8_t>(pugi::cast<uint16_t>(mountNode.attribute("id").value())),
+			pugi::cast<uint16_t>(mountNode.attribute("clientid").value()),
+			mountNode.attribute("name").as_string(),
+			pugi::cast<int32_t>(mountNode.attribute("speed").value()),
+			mountNode.attribute("premium").as_bool()
+		);
+	}
 	mounts.shrink_to_fit();
 	return true;
 }
 
-Mount* Mounts::getMountByID(uint16_t id)
+Mount* Mounts::getMountByID(uint8_t id)
 {
-	auto it = std::find_if(mounts.begin(), mounts.end(), [id](const Mount& mount) { return mount.id == id; });
+	auto it = std::find_if(mounts.begin(), mounts.end(), [id](const Mount& mount) {
+		return mount.id == id;
+	});
 
 	return it != mounts.end() ? &*it : nullptr;
 }

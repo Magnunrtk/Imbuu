@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef FS_ACTIONS_H
-#define FS_ACTIONS_H
+#ifndef FS_ACTIONS_H_87F60C5F587E4B84948F304A6451E6E6
+#define FS_ACTIONS_H_87F60C5F587E4B84948F304A6451E6E6
 
 #include "baseevents.h"
 #include "enums.h"
@@ -120,8 +120,6 @@ class Actions final : public BaseEvents
 
 		bool registerLuaEvent(Action* event);
 		void clear(bool fromLua) override final;
-		
-		bool isValid(std::map<Action*, std::vector<uint16_t>> map, Action* action) { return map.find(action) != map.end(); }
 
 	private:
 		ReturnValue internalUseItem(Player* player, const Position& pos, uint8_t index, Item* item, bool isHotkey);

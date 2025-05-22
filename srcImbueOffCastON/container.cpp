@@ -267,15 +267,7 @@ ReturnValue Container::queryAdd(int32_t index, const Thing& thing, uint32_t coun
 	if (getWeaponType() == WEAPON_QUIVER && item->getWeaponType() != WEAPON_AMMO) {
 		return RETURNVALUE_QUIVERAMMOONLY;
 	}
-	
-	// loot pouch: allow item autoloot
-	if (getID() == ITEM_LOOT_POUCH) {
-        if (actor && dynamic_cast<Player*>(actor)) {
-            return RETURNVALUE_LOOTPOUCHINVALIDITEM;
-        }
-        return RETURNVALUE_NOERROR;
-    }
-	
+
 	const Cylinder* cylinder = getParent();
 
 	if (!hasBitSet(FLAG_NOLIMIT, flags)) {

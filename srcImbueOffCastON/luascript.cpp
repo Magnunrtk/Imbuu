@@ -783,7 +783,7 @@ Outfit_t LuaScriptInterface::getOutfit(lua_State* L, int32_t arg)
 
 	outfit.lookTypeEx = getField<uint16_t>(L, arg, "lookTypeEx");
 	outfit.lookType = getField<uint16_t>(L, arg, "lookType");
-	
+
 	lua_pop(L, 8);
 	return outfit;
 }
@@ -1044,7 +1044,7 @@ void LuaScriptInterface::registerFunctions()
 
 	//getDepotId(uid)
 	lua_register(luaState, "getDepotId", LuaScriptInterface::luaGetDepotId);
-	
+
 	//getWorldTime()
 	lua_register(luaState, "getWorldTime", LuaScriptInterface::luaGetWorldTime);
 
@@ -1427,22 +1427,19 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(CONST_ME_FATAL);
 	registerEnum(CONST_ME_DODGE);
 	registerEnum(CONST_ME_HOURGLASS);
-	registerEnum(CONST_ME_DAZZLING);
 	registerEnum(CONST_ME_FERUMBRAS_1);
 	registerEnum(CONST_ME_GAZHARAGOTH);
 	registerEnum(CONST_ME_MAD_MAGE);
 	registerEnum(CONST_ME_HORESTIS);
 	registerEnum(CONST_ME_DEVOVORGA);
 	registerEnum(CONST_ME_FERUMBRAS_2);
-	registerEnum(CONST_ME_WHITE_SMOKE);
-	registerEnum(CONST_ME_WHITE_SMOKES);
-	registerEnum(CONST_ME_WATER_DROP);
-	registerEnum(CONST_ME_AVATAR_APPEAR);
-	registerEnum(CONST_ME_DIVINE_GRENADE);
-	registerEnum(CONST_ME_DIVINE_EMPOWERMENT);
-	registerEnum(CONST_ME_WATER_FLOATING_THRASH);
-	registerEnum(CONST_ME_AGONY);
-	registerEnum(CONST_ME_LOOT_HIGHLIGHT);
+	registerEnum(CONST_ME_ENTINCE_SMOKE);
+	registerEnum(CONST_ME_SMOKE_2);
+	registerEnum(CONST_ME_TEAR_SACRED);
+	registerEnum(CONST_ME_METEOR_EXPLOSION);
+	registerEnum(CONST_ME_ENTINCE_HOLY);
+	registerEnum(CONST_ME_HOLY_MARK);
+	registerEnum(CONST_ME_WATER_REMAINS);
 
 	registerEnum(CONST_ANI_NONE);
 	registerEnum(CONST_ANI_SPEAR);
@@ -1605,6 +1602,7 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(ITEM_ATTRIBUTE_ATTACK_SPEED);
 	registerEnum(ITEM_ATTRIBUTE_CLASSIFICATION);
 	registerEnum(ITEM_ATTRIBUTE_TIER);
+	registerEnum(ITEM_ATTRIBUTE_IMBUEMENTSLOTS);
 
 	registerEnum(ITEM_TYPE_DEPOT);
 	registerEnum(ITEM_TYPE_MAILBOX);
@@ -1645,8 +1643,6 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(ITEM_LETTER_STAMPED);
 	registerEnum(ITEM_LABEL)
 	registerEnum(ITEM_INBOX);
-	registerEnum(ITEM_MARKET);
-	registerEnum(ITEM_LOOT_POUCH);
 	registerEnum(ITEM_SUPPLY_STASH);
 	registerEnum(ITEM_FIREFIELD_PVP_FULL);
 	registerEnum(ITEM_FIREFIELD_PVP_MEDIUM);
@@ -1762,7 +1758,7 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(SPECIALSKILL_LIFELEECHAMOUNT);
 	registerEnum(SPECIALSKILL_MANALEECHCHANCE);
 	registerEnum(SPECIALSKILL_MANALEECHAMOUNT);
-	
+
 	registerEnum(SKULL_NONE);
 	registerEnum(SKULL_YELLOW);
 	registerEnum(SKULL_GREEN);
@@ -2035,47 +2031,6 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(MONSTERS_EVENT_DISAPPEAR);
 	registerEnum(MONSTERS_EVENT_MOVE);
 	registerEnum(MONSTERS_EVENT_SAY);
-	
-	registerEnum(DECAYING_FALSE)
-	registerEnum(DECAYING_TRUE)
-	registerEnum(DECAYING_PENDING)
-	
-	registerEnum(SPELLGROUP_NONE);
-	registerEnum(SPELLGROUP_ATTACK);
-	registerEnum(SPELLGROUP_HEALING);
-	registerEnum(SPELLGROUP_SUPPORT);
-	registerEnum(SPELLGROUP_SPECIAL);
-	
-	// Imbuements
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_NONE);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_FIRE_DAMAGE);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_EARTH_DAMAGE);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_ICE_DAMAGE);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_ENERGY_DAMAGE);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_DEATH_DAMAGE);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_HOLY_DAMAGE);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_LIFE_LEECH);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_MANA_LEECH);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_CRITICAL_CHANCE);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_CRITICAL_AMOUNT);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_FIRE_RESIST);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_EARTH_RESIST);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_ICE_RESIST);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_ENERGY_RESIST);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_HOLY_RESIST);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_DEATH_RESIST);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_PARALYSIS_DEFLECTION);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_SPEED_BOOST);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_CAPACITY_BOOST);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_FIST_SKILL);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_AXE_SKILL);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_SWORD_SKILL);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_CLUB_SKILL);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_DISTANCE_SKILL);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_FISHING_SKILL);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_SHIELD_SKILL);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_MAGIC_LEVEL);
-	registerEnum(ImbuementType::IMBUEMENT_TYPE_LAST);
 
 	// _G
 	registerGlobalVariable("INDEX_WHEREEVER", INDEX_WHEREEVER);
@@ -2087,66 +2042,64 @@ void LuaScriptInterface::registerFunctions()
 	// configKeys
 	registerTable("configKeys");
 
-	registerEnumIn("configKeys", ConfigManager::ALLOW_CHANGEOUTFIT);
-	registerEnumIn("configKeys", ConfigManager::ONE_PLAYER_ON_ACCOUNT);
-	registerEnumIn("configKeys", ConfigManager::AIMBOT_HOTKEY_ENABLED);
-	registerEnumIn("configKeys", ConfigManager::REMOVE_RUNE_CHARGES);
-	registerEnumIn("configKeys", ConfigManager::REMOVE_WEAPON_AMMO);
-	registerEnumIn("configKeys", ConfigManager::REMOVE_WEAPON_CHARGES);
-	registerEnumIn("configKeys", ConfigManager::REMOVE_POTION_CHARGES);
-	registerEnumIn("configKeys", ConfigManager::PZLOCK_SKULL_ATTACKER);
-	registerEnumIn("configKeys", ConfigManager::EXPERIENCE_FROM_PLAYERS);
-	registerEnumIn("configKeys", ConfigManager::FREE_PREMIUM);
-	registerEnumIn("configKeys", ConfigManager::REPLACE_KICK_ON_LOGIN);
-	registerEnumIn("configKeys", ConfigManager::ALLOW_CLONES);
-	registerEnumIn("configKeys", ConfigManager::BIND_ONLY_GLOBAL_ADDRESS);
-	registerEnumIn("configKeys", ConfigManager::OPTIMIZE_DATABASE);
-	registerEnumIn("configKeys", ConfigManager::MARKET_PREMIUM);
-	registerEnumIn("configKeys", ConfigManager::EMOTE_SPELLS);
-	registerEnumIn("configKeys", ConfigManager::STAMINA_SYSTEM);
-	registerEnumIn("configKeys", ConfigManager::WARN_UNSAFE_SCRIPTS);
-	registerEnumIn("configKeys", ConfigManager::CONVERT_UNSAFE_SCRIPTS);
-	registerEnumIn("configKeys", ConfigManager::CLASSIC_EQUIPMENT_SLOTS);
-	registerEnumIn("configKeys", ConfigManager::CLASSIC_ATTACK_SPEED);
-	registerEnumIn("configKeys", ConfigManager::SERVER_SAVE_NOTIFY_MESSAGE);
-	registerEnumIn("configKeys", ConfigManager::SERVER_SAVE_NOTIFY_DURATION);
-	registerEnumIn("configKeys", ConfigManager::SERVER_SAVE_CLEAN_MAP);
-	registerEnumIn("configKeys", ConfigManager::SERVER_SAVE_CLOSE);
-	registerEnumIn("configKeys", ConfigManager::SERVER_SAVE_SHUTDOWN);
-	registerEnumIn("configKeys", ConfigManager::ONLINE_OFFLINE_CHARLIST);
-	registerEnumIn("configKeys", ConfigManager::LUA_ITEM_DESC);
+	registerEnumIn("configKeys", ConfigManager::ALLOW_CHANGEOUTFIT)
+	registerEnumIn("configKeys", ConfigManager::ONE_PLAYER_ON_ACCOUNT)
+	registerEnumIn("configKeys", ConfigManager::AIMBOT_HOTKEY_ENABLED)
+	registerEnumIn("configKeys", ConfigManager::REMOVE_RUNE_CHARGES)
+	registerEnumIn("configKeys", ConfigManager::REMOVE_WEAPON_AMMO)
+	registerEnumIn("configKeys", ConfigManager::REMOVE_WEAPON_CHARGES)
+	registerEnumIn("configKeys", ConfigManager::REMOVE_POTION_CHARGES)
+	registerEnumIn("configKeys", ConfigManager::PZLOCK_SKULL_ATTACKER)
+	registerEnumIn("configKeys", ConfigManager::EXPERIENCE_FROM_PLAYERS)
+	registerEnumIn("configKeys", ConfigManager::FREE_PREMIUM)
+	registerEnumIn("configKeys", ConfigManager::REPLACE_KICK_ON_LOGIN)
+	registerEnumIn("configKeys", ConfigManager::ALLOW_CLONES)
+	registerEnumIn("configKeys", ConfigManager::BIND_ONLY_GLOBAL_ADDRESS)
+	registerEnumIn("configKeys", ConfigManager::OPTIMIZE_DATABASE)
+	registerEnumIn("configKeys", ConfigManager::EMOTE_SPELLS)
+	registerEnumIn("configKeys", ConfigManager::STAMINA_SYSTEM)
+	registerEnumIn("configKeys", ConfigManager::WARN_UNSAFE_SCRIPTS)
+	registerEnumIn("configKeys", ConfigManager::CONVERT_UNSAFE_SCRIPTS)
+	registerEnumIn("configKeys", ConfigManager::CLASSIC_EQUIPMENT_SLOTS)
+	registerEnumIn("configKeys", ConfigManager::CLASSIC_ATTACK_SPEED)
+	registerEnumIn("configKeys", ConfigManager::SERVER_SAVE_NOTIFY_MESSAGE)
+	registerEnumIn("configKeys", ConfigManager::SERVER_SAVE_NOTIFY_DURATION)
+	registerEnumIn("configKeys", ConfigManager::SERVER_SAVE_CLEAN_MAP)
+	registerEnumIn("configKeys", ConfigManager::SERVER_SAVE_CLOSE)
+	registerEnumIn("configKeys", ConfigManager::SERVER_SAVE_SHUTDOWN)
+	registerEnumIn("configKeys", ConfigManager::ONLINE_OFFLINE_CHARLIST)
+	registerEnumIn("configKeys", ConfigManager::LUA_ITEM_DESC)
 
-	registerEnumIn("configKeys", ConfigManager::MAP_NAME);
-	registerEnumIn("configKeys", ConfigManager::HOUSE_RENT_PERIOD);
-	registerEnumIn("configKeys", ConfigManager::SERVER_NAME);
-	registerEnumIn("configKeys", ConfigManager::OWNER_NAME);
-	registerEnumIn("configKeys", ConfigManager::OWNER_EMAIL);
-	registerEnumIn("configKeys", ConfigManager::URL);
-	registerEnumIn("configKeys", ConfigManager::LOCATION);
-	registerEnumIn("configKeys", ConfigManager::IP);
-	registerEnumIn("configKeys", ConfigManager::MOTD);
-	registerEnumIn("configKeys", ConfigManager::WORLD_TYPE);
-	registerEnumIn("configKeys", ConfigManager::MYSQL_HOST);
-	registerEnumIn("configKeys", ConfigManager::MYSQL_USER);
-	registerEnumIn("configKeys", ConfigManager::MYSQL_PASS);
-	registerEnumIn("configKeys", ConfigManager::MYSQL_DB);
-	registerEnumIn("configKeys", ConfigManager::MYSQL_SOCK);
-	registerEnumIn("configKeys", ConfigManager::DEFAULT_PRIORITY);
-	registerEnumIn("configKeys", ConfigManager::MAP_AUTHOR);
+	registerEnumIn("configKeys", ConfigManager::MAP_NAME)
+	registerEnumIn("configKeys", ConfigManager::HOUSE_RENT_PERIOD)
+	registerEnumIn("configKeys", ConfigManager::SERVER_NAME)
+	registerEnumIn("configKeys", ConfigManager::OWNER_NAME)
+	registerEnumIn("configKeys", ConfigManager::OWNER_EMAIL)
+	registerEnumIn("configKeys", ConfigManager::URL)
+	registerEnumIn("configKeys", ConfigManager::LOCATION)
+	registerEnumIn("configKeys", ConfigManager::IP)
+	registerEnumIn("configKeys", ConfigManager::MOTD)
+	registerEnumIn("configKeys", ConfigManager::WORLD_TYPE)
+	registerEnumIn("configKeys", ConfigManager::MYSQL_HOST)
+	registerEnumIn("configKeys", ConfigManager::MYSQL_USER)
+	registerEnumIn("configKeys", ConfigManager::MYSQL_PASS)
+	registerEnumIn("configKeys", ConfigManager::MYSQL_DB)
+	registerEnumIn("configKeys", ConfigManager::MYSQL_SOCK)
+	registerEnumIn("configKeys", ConfigManager::DEFAULT_PRIORITY)
+	registerEnumIn("configKeys", ConfigManager::MAP_AUTHOR)
 
-	registerEnumIn("configKeys", ConfigManager::SQL_PORT);
-	registerEnumIn("configKeys", ConfigManager::MAX_PLAYERS);
-	registerEnumIn("configKeys", ConfigManager::PZ_LOCKED);
-	registerEnumIn("configKeys", ConfigManager::DEFAULT_DESPAWNRANGE);
-	registerEnumIn("configKeys", ConfigManager::DEFAULT_DESPAWNRADIUS);
-	registerEnumIn("configKeys", ConfigManager::DEFAULT_WALKTOSPAWNRADIUS);
-	registerEnumIn("configKeys", ConfigManager::REMOVE_ON_DESPAWN);
-	registerEnumIn("configKeys", ConfigManager::RATE_EXPERIENCE);
-	registerEnumIn("configKeys", ConfigManager::RATE_SKILL);
-	registerEnumIn("configKeys", ConfigManager::RATE_LOOT);
-	registerEnumIn("configKeys", ConfigManager::RATE_MAGIC);
-	registerEnumIn("configKeys", ConfigManager::HOUSE_LEVEL);
-	registerEnumIn("configKeys", ConfigManager::HOUSE_PRICE);
+	registerEnumIn("configKeys", ConfigManager::SQL_PORT)
+	registerEnumIn("configKeys", ConfigManager::MAX_PLAYERS)
+	registerEnumIn("configKeys", ConfigManager::PZ_LOCKED)
+	registerEnumIn("configKeys", ConfigManager::DEFAULT_DESPAWNRANGE)
+	registerEnumIn("configKeys", ConfigManager::DEFAULT_DESPAWNRADIUS)
+	registerEnumIn("configKeys", ConfigManager::DEFAULT_WALKTOSPAWNRADIUS)
+	registerEnumIn("configKeys", ConfigManager::REMOVE_ON_DESPAWN)
+	registerEnumIn("configKeys", ConfigManager::RATE_EXPERIENCE)
+	registerEnumIn("configKeys", ConfigManager::RATE_SKILL)
+	registerEnumIn("configKeys", ConfigManager::RATE_LOOT)
+	registerEnumIn("configKeys", ConfigManager::RATE_MAGIC)
+	registerEnumIn("configKeys", ConfigManager::HOUSE_PRICE)
 	
 	// Frags System
 	registerEnumIn("configKeys", ConfigManager::RED_DAILY_LIMIT);
@@ -2158,20 +2111,17 @@ void LuaScriptInterface::registerFunctions()
 	registerEnumIn("configKeys", ConfigManager::BLACK_MONTHLY_LIMIT);
 	registerEnumIn("configKeys", ConfigManager::BLACK_SKULL_LENGTH);
 	
-	registerEnumIn("configKeys", ConfigManager::MAX_MESSAGEBUFFER);
-	registerEnumIn("configKeys", ConfigManager::PROTECTION_LEVEL);
-	registerEnumIn("configKeys", ConfigManager::DEATH_LOSE_PERCENT);
-	registerEnumIn("configKeys", ConfigManager::STATUSQUERY_TIMEOUT);
-	registerEnumIn("configKeys", ConfigManager::WHITE_SKULL_TIME);
-	registerEnumIn("configKeys", ConfigManager::GAME_PORT);
-	registerEnumIn("configKeys", ConfigManager::LOGIN_PORT);
-	registerEnumIn("configKeys", ConfigManager::STATUS_PORT);
-	registerEnumIn("configKeys", ConfigManager::STAIRHOP_DELAY);
-	registerEnumIn("configKeys", ConfigManager::MARKET_OFFER_DURATION);
-	registerEnumIn("configKeys", ConfigManager::CHECK_EXPIRED_MARKET_OFFERS_EACH_MINUTES);
-	registerEnumIn("configKeys", ConfigManager::MAX_MARKET_OFFERS_AT_A_TIME_PER_PLAYER);
-	registerEnumIn("configKeys", ConfigManager::EXP_FROM_PLAYERS_LEVEL_RANGE);
-	registerEnumIn("configKeys", ConfigManager::MAX_PACKETS_PER_SECOND);
+	registerEnumIn("configKeys", ConfigManager::MAX_MESSAGEBUFFER)
+	registerEnumIn("configKeys", ConfigManager::PROTECTION_LEVEL)
+	registerEnumIn("configKeys", ConfigManager::DEATH_LOSE_PERCENT)
+	registerEnumIn("configKeys", ConfigManager::STATUSQUERY_TIMEOUT)
+	registerEnumIn("configKeys", ConfigManager::WHITE_SKULL_TIME)
+	registerEnumIn("configKeys", ConfigManager::GAME_PORT)
+	registerEnumIn("configKeys", ConfigManager::LOGIN_PORT)
+	registerEnumIn("configKeys", ConfigManager::STATUS_PORT)
+	registerEnumIn("configKeys", ConfigManager::STAIRHOP_DELAY)
+	registerEnumIn("configKeys", ConfigManager::EXP_FROM_PLAYERS_LEVEL_RANGE)
+	registerEnumIn("configKeys", ConfigManager::MAX_PACKETS_PER_SECOND)
 	registerEnumIn("configKeys", ConfigManager::SORT_LOOT_BY_CHANCE);
 	registerEnumIn("configKeys", ConfigManager::MAX_ALLOWED_ON_A_DUMMY);
 	registerEnumIn("configKeys", ConfigManager::NPCS_USING_BANK_MONEY);
@@ -2445,35 +2395,6 @@ void LuaScriptInterface::registerFunctions()
 
 	registerMethod("Item", "setBoostPercent", LuaScriptInterface::luaItemSetBoostPercent);
 	registerMethod("Item", "getBoostPercent", LuaScriptInterface::luaItemGetBoostPercent);
-	
-	registerMethod("Item", "getImbuementSlots", LuaScriptInterface::luaItemGetImbuementSlots);
-	registerMethod("Item", "getFreeImbuementSlots", LuaScriptInterface::luaItemGetFreeImbuementSlots);
-	registerMethod("Item", "canImbue", LuaScriptInterface::luaItemCanImbue);
-	registerMethod("Item", "addImbuementSlots", LuaScriptInterface::luaItemAddImbuementSlots);
-	registerMethod("Item", "removeImbuementSlots", LuaScriptInterface::luaItemRemoveImbuementSlots);
-	registerMethod("Item", "hasImbuementType", LuaScriptInterface::luaItemHasImbuementType);
-	registerMethod("Item", "hasImbuements", LuaScriptInterface::luaItemHasImbuements); // change to isImbued
-	registerMethod("Item", "addImbuement", LuaScriptInterface::luaItemAddImbuement);
-	registerMethod("Item", "removeImbuement", LuaScriptInterface::luaItemRemoveImbuement);
-	registerMethod("Item", "getImbuements", LuaScriptInterface::luaItemGetImbuements);
-
-	// Imbuement
-	registerClass("Imbuement", "", LuaScriptInterface::luaImbuementCreate);
-	registerMetaMethod("Imbuement", "__eq", LuaScriptInterface::luaUserdataCompare);
-	registerMethod("Imbuement", "getType", LuaScriptInterface::luaImbuementGetType);
-	registerMethod("Imbuement", "isSkill", LuaScriptInterface::luaImbuementIsSkill);
-	registerMethod("Imbuement", "isSpecialSkill", LuaScriptInterface::luaImbuementIsSpecialSkill);
-	registerMethod("Imbuement", "isStat", LuaScriptInterface::luaImbuementIsStat);
-	registerMethod("Imbuement", "isDamage", LuaScriptInterface::luaImbuementIsDamage);
-	registerMethod("Imbuement", "isResist", LuaScriptInterface::luaImbuementIsResist);
-	registerMethod("Imbuement", "getValue", LuaScriptInterface::luaImbuementGetValue);
-	registerMethod("Imbuement", "setValue", LuaScriptInterface::luaImbuementSetValue);
-	registerMethod("Imbuement", "getDuration", LuaScriptInterface::luaImbuementGetDuration);
-	registerMethod("Imbuement", "setDuration", LuaScriptInterface::luaImbuementSetDuration);
-	registerMethod("Imbuement", "makeEquipDecayed", LuaScriptInterface::luaImbuementSetEquipDecay);
-	registerMethod("Imbuement", "makeInfightDecayed", LuaScriptInterface::luaImbuementSetInfightDecay);
-	registerMethod("Imbuement", "isEquipDecayed", LuaScriptInterface::luaImbuementIsEquipDecay);
-	registerMethod("Imbuement", "isInfightDecayed", LuaScriptInterface::luaImbuementIsInfightDecay);
 
 	// Container
 	registerClass("Container", "Item", LuaScriptInterface::luaContainerCreate);
@@ -2481,7 +2402,6 @@ void LuaScriptInterface::registerFunctions()
 
 	registerMethod("Container", "getSize", LuaScriptInterface::luaContainerGetSize);
 	registerMethod("Container", "getCapacity", LuaScriptInterface::luaContainerGetCapacity);
-	registerMethod("Container", "setCapacity", LuaScriptInterface::luaContainerSetCapacity);
 	registerMethod("Container", "getEmptySlots", LuaScriptInterface::luaContainerGetEmptySlots);
 	registerMethod("Container", "getContentDescription", LuaScriptInterface::luaContainerGetContentDescription);
 	registerMethod("Container", "getItems", LuaScriptInterface::luaContainerGetItems);
@@ -2765,12 +2685,7 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("Player", "getIdleTime", LuaScriptInterface::luaPlayerGetIdleTime);
 	registerMethod("Player", "setIdleTime", LuaScriptInterface::luaPlayerSetIdleTime);
 	registerMethod("Player", "resetIdleTime", LuaScriptInterface::luaPlayerResetIdleTime);
-	
-	registerMethod("Player", "isNearDepotBox", LuaScriptInterface::luaPlayerIsNearDepotBox);
-	
-	registerMethod("Player", "openMarket", LuaScriptInterface::luaPlayerOpenMarket);
-	
-	
+
 	// Monster
 	registerClass("Monster", "Creature", LuaScriptInterface::luaMonsterCreate);
 	registerMetaMethod("Monster", "__eq", LuaScriptInterface::luaUserdataCompare);
@@ -2970,6 +2885,7 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("ItemType", "getAttackSpeed", LuaScriptInterface::luaItemTypeGetAttackSpeed);
 	registerMethod("ItemType", "getClassification", LuaScriptInterface::luaItemTypeGetClassification);
 	registerMethod("ItemType", "getTier", LuaScriptInterface::luaItemTypeGetTier);
+	registerMethod("ItemType", "getImbuementSlots", LuaScriptInterface::luaItemTypeGetImbuementSlots);
 	registerMethod("ItemType", "getDefense", LuaScriptInterface::luaItemTypeGetDefense);
 	registerMethod("ItemType", "getExtraDefense", LuaScriptInterface::luaItemTypeGetExtraDefense);
 	registerMethod("ItemType", "getArmor", LuaScriptInterface::luaItemTypeGetArmor);
@@ -2984,7 +2900,6 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("ItemType", "getDecayId", LuaScriptInterface::luaItemTypeGetDecayId);
 	registerMethod("ItemType", "getRequiredLevel", LuaScriptInterface::luaItemTypeGetRequiredLevel);
 	registerMethod("ItemType", "getAmmoType", LuaScriptInterface::luaItemTypeGetAmmoType);
-	registerMethod("ItemType", "getShootType", LuaScriptInterface::luaItemTypeGetShootType);
 	registerMethod("ItemType", "getCorpseType", LuaScriptInterface::luaItemTypeGetCorpseType);
 
 	registerMethod("ItemType", "getAbilities", LuaScriptInterface::luaItemTypeGetAbilities);
@@ -7123,357 +7038,6 @@ int LuaScriptInterface::luaItemGetBoostPercent(lua_State* L)
 	return 1;
 }
 
-int LuaScriptInterface::luaItemGetImbuementSlots(lua_State* L)
-{
-	// item:getImbuementSlots() -- returns how many total slots
-	Item* item = getUserdata<Item>(L, 1);
-	if (item)
-	{
-		lua_pushnumber(L, item->getImbuementSlots());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaItemGetFreeImbuementSlots(lua_State* L)
-{
-	// item:getFreeImbuementSlots() -- returns how many slots are available for use
-	Item* item = getUserdata<Item>(L, 1);
-	if (item)
-	{
-		lua_pushnumber(L, item->getFreeImbuementSlots());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaItemCanImbue(lua_State* L)
-{
-	// item:canImbue(amount) -- returns true if item has slots that are free
-	Item* item = getUserdata<Item>(L, 1);
-	if (item)
-	{
-		pushBoolean(L, item->canImbue());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaItemAddImbuementSlots(lua_State* L)
-{
-	// item:addImbuementSlots(amount) -- tries to add imbuement slot(s), returns true if successful
-	Item* item = getUserdata<Item>(L, 1);
-	if (item)
-	{
-		pushBoolean(L, item->addImbuementSlots(getNumber<uint32_t>(L, 2)));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaItemRemoveImbuementSlots(lua_State* L)
-{
-	// item:removeImbuementSlots(amount, destroy) -- tries to remove imbuement slot(s), returns true if successful
-	Item* item = getUserdata<Item>(L, 1);
-	if (item)
-	{
-		pushBoolean(L, item->removeImbuementSlots(getNumber<uint32_t>(L, 2), getBoolean(L, 5, false)));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaItemHasImbuementType(lua_State* L)
-{
-	// item:hasImbuementType(type)
-	Item* item = getUserdata<Item>(L, 1);
-	if (item)
-	{
-		pushBoolean(L, item->hasImbuementType(getNumber<ImbuementType>(L, 2, ImbuementType::IMBUEMENT_TYPE_NONE)));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaItemHasImbuement(lua_State* L)
-{
-	// item:hasImbuement(imbueType, amount, duration, realtime)
-	Item* item = getUserdata<Item>(L, 1);
-	if (item)
-	{
-		std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 2);
-		if (imbue) {
-			pushBoolean(L, item->hasImbuement(imbue));
-		} else {
-			lua_pushnil(L);
-		}
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaItemHasImbuements(lua_State* L)
-{
-	// item:hasImbuements() -- returns true if item has any imbuements
-	Item* item = getUserdata<Item>(L, 1);
-	if (item)
-	{
-		pushBoolean(L, item->hasImbuements());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaItemAddImbuement(lua_State* L)
-{
-	// item:addImbuement(imbuement) -- returns true if it successfully adds the imbuement
-	Item* item = getUserdata<Item>(L, 1);
-	if (item)
-	{
-		std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 2);
-		if (imbue) {
-			pushBoolean(L, item->addImbuement(imbue, true));
-		}
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaItemRemoveImbuement(lua_State* L)
-{
-	// item:removeImbuement(imbuement)
-	Item* item = getUserdata<Item>(L, 1);
-	if (item)
-	{
-		std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 2);
-		if (imbue) {
-			pushBoolean(L, item->removeImbuement(imbue, false));
-		}
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-
-int LuaScriptInterface::luaItemGetImbuements(lua_State* L)
-{
-	// item:getImbuements() -- returns a table that contains values that are imbuement userdata?
-	Item* item = getUserdata<Item>(L, 1);
-	if (!item) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	std::vector<std::shared_ptr<Imbuement>> imbuements = item->getImbuements();
-	lua_createtable(L, imbuements.size(), 0);
-
-	int index = 0;
-	for (std::shared_ptr<Imbuement> imbuement : imbuements) {
-		pushSharedPtr(L, imbuement);
-		setMetatable(L, -1, "Imbuement");
-		lua_rawseti(L, -2, ++index);
-	}
-	return 1;
-}
-
-// Imbuement
-
-int LuaScriptInterface::luaImbuementCreate(lua_State* L)
-{
-	// Imbuement(type, amount, duration, decayType = IMBUE_DECAY_EQUIPPED)
-	ImbuementType imbueType = getNumber<ImbuementType>(L, 2, ImbuementType::IMBUEMENT_TYPE_NONE);
-	uint32_t amount = getNumber<uint32_t>(L, 3);
-	uint32_t duration = getNumber<uint32_t>(L, 4);
-	ImbuementDecayType decayType = getNumber<ImbuementDecayType>(L, 5, ImbuementDecayType::IMBUEMENT_DECAY_EQUIPPED);
-	pushSharedPtr(L, std::make_shared<Imbuement>(Imbuement(imbueType, amount, duration, decayType)));
-	setMetatable(L, -1, "Imbuement");
-	return 1;
-}
-
-int LuaScriptInterface::luaImbuementGetType(lua_State* L)
-{
-	// imbuement:getType()
-	std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 1);
-	if (imbue) {
-		lua_pushnumber(L, static_cast<uint8_t>(imbue->imbuetype));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaImbuementGetValue(lua_State* L)
-{
-	// imbuement:getValue()
-	std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 1);
-	if (imbue) {
-		lua_pushnumber(L, imbue->value);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-
-int LuaScriptInterface::luaImbuementGetDuration(lua_State* L)
-{
-	// imbuement:getDuration()
-	std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 1);
-	if (imbue) {
-		lua_pushnumber(L, static_cast<uint32_t>(imbue->duration));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaImbuementIsSkill(lua_State* L)
-{
-	// imbuement:isSkill()
-	std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 1);
-	if (imbue) {
-		lua_pushnumber(L, imbue->isSkill());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaImbuementIsSpecialSkill(lua_State* L)
-{
-	// imbuement:isSpecialSkill()
-	std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 1);
-	if (imbue) {
-		lua_pushnumber(L, imbue->isSpecialSkill());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaImbuementIsDamage(lua_State* L)
-{
-	// imbuement:isDamage()
-	std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 1);
-	if (imbue) {
-		lua_pushnumber(L, imbue->isDamage());
-	}
-	else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaImbuementIsResist(lua_State* L)
-{
-	// imbuement:isResist()
-	std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 1);
-	if (imbue) {
-		lua_pushnumber(L, imbue->isResist());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaImbuementIsStat(lua_State* L)
-{
-	// imbuement:isStat()
-	std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 1);
-	if (imbue) {
-		lua_pushnumber(L, imbue->isStat());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaImbuementSetValue(lua_State* L)
-{
-	// imbuement:setAmount(amount)
-	std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 1);
-	if (imbue) {
-		imbue->value = getNumber<uint32_t>(L, 2);
-		pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaImbuementSetDuration(lua_State* L)
-{
-	// imbuement:setDuration(duration)
-	std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 1);
-	if (imbue) {
-		imbue->duration = getNumber<uint32_t>(L, 2);
-		pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaImbuementSetEquipDecay(lua_State* L)
-{
-	// imbuement:makeEquipDecayed()
-	std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 1);
-	if (imbue) {
-		imbue->decaytype = ImbuementDecayType::IMBUEMENT_DECAY_EQUIPPED;
-		pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaImbuementSetInfightDecay(lua_State* L)
-{
-	// imbuement:makeInfightDecayed()
-	std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 1);
-	if (imbue) {
-		imbue->decaytype = ImbuementDecayType::IMBUEMENT_DECAY_INFIGHT;
-		pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaImbuementIsEquipDecay(lua_State* L)
-{
-	// imbuement:isEquipDecayed()
-	std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 1);
-	if (imbue) {
-		pushBoolean(L, imbue->decaytype == ImbuementDecayType::IMBUEMENT_DECAY_EQUIPPED);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaImbuementIsInfightDecay(lua_State* L)
-{
-	// imbuement:isInfightDecayed()
-	std::shared_ptr<Imbuement> imbue = getSharedPtr<Imbuement>(L, 1);
-	if (imbue) {
-		pushBoolean(L, imbue->decaytype == ImbuementDecayType::IMBUEMENT_DECAY_INFIGHT);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
 // Container
 int LuaScriptInterface::luaContainerCreate(lua_State* L)
 {
@@ -7508,20 +7072,6 @@ int LuaScriptInterface::luaContainerGetCapacity(lua_State* L)
 	Container* container = getUserdata<Container>(L, 1);
 	if (container) {
 		lua_pushnumber(L, container->capacity());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaContainerSetCapacity(lua_State* L)
-{
-	// container:setCapacity(capacity)
-	Container* container = getUserdata<Container>(L, 1);
-	if (container) {
-		uint32_t capacity = getNumber<uint32_t>(L, 2);
-		container->setCapacity(capacity);
-		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
 	}
@@ -8532,33 +8082,29 @@ int LuaScriptInterface::luaCreatureRemoveCondition(lua_State* L)
 {
 	// creature:removeCondition(conditionType[, conditionId = CONDITIONID_COMBAT[, subId = 0[, force = false]]])
 	// creature:removeCondition(condition[, force = false])
-	Creature* const creature = getUserdata<Creature>(L, 1);
+	Creature* creature = getUserdata<Creature>(L, 1);
 	if (!creature) {
 		lua_pushnil(L);
 		return 1;
 	}
 
-	Condition* creatureCondition = nullptr;
+	Condition* condition = nullptr;
 
 	bool force = false;
 
 	if (isUserdata(L, 2)) {
-		const Condition* const condition = getUserdata<Condition>(L, 2);
-		const ConditionType_t conditionType = condition->getType();
-		const ConditionId_t conditionId = condition->getId();
-		const uint32_t subId = condition->getSubId();
-		creatureCondition = creature->getCondition(conditionType, conditionId, subId);
+		condition = getUserdata<Condition>(L, 2);
 		force = getBoolean(L, 3, false);
 	} else {
-		const ConditionType_t conditionType = getNumber<ConditionType_t>(L, 2);
-		const ConditionId_t conditionId = getNumber<ConditionId_t>(L, 3, CONDITIONID_COMBAT);
-		const uint32_t subId = getNumber<uint32_t>(L, 4, 0);
-		creatureCondition = creature->getCondition(conditionType, conditionId, subId);
+		ConditionType_t conditionType = getNumber<ConditionType_t>(L, 2);
+		ConditionId_t conditionId = getNumber<ConditionId_t>(L, 3, CONDITIONID_COMBAT);
+		uint32_t subId = getNumber<uint32_t>(L, 4, 0);
+		condition = creature->getCondition(conditionType, conditionId, subId);
 		force = getBoolean(L, 5, false);
 	}
 
-	if (creatureCondition) {
-		creature->removeCondition(creatureCondition, force);
+	if (condition) {
+		creature->removeCondition(condition, force);
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
@@ -10263,13 +9809,10 @@ int LuaScriptInterface::luaPlayerShowTextDialog(lua_State* L)
 	}
 
 	Item* item;
-	bool fixMemoryLeak = false;
 	if (isNumber(L, 2)) {
 		item = Item::CreateItem(getNumber<uint16_t>(L, 2));
-			fixMemoryLeak = true;
 	} else if (isString(L, 2)) {
 		item = Item::CreateItem(Item::items.getItemIdByName(getString(L, 2)));
-		fixMemoryLeak = true;
 	} else if (isUserdata(L, 2)) {
 		if (getUserdataType(L, 2) != LuaData_Item) {
 			pushBoolean(L, false);
@@ -10301,12 +9844,6 @@ int LuaScriptInterface::luaPlayerShowTextDialog(lua_State* L)
 	player->writeItem = item;
 	player->maxWriteLen = length;
 	player->sendTextWindow(item, length, canWrite);
-	if (fixMemoryLeak) {
-		// Player::setWriteItem will add reference so we'll end up with 2 references
-		// and since we'll have 2 references the memory allocated will never be destroyed
-		// to avoid that we decrement one reference here
-		item->decrementReferenceCounter();
-	}
 	pushBoolean(L, true);
 	return 1;
 }
@@ -10598,9 +10135,9 @@ int LuaScriptInterface::luaPlayerAddMount(lua_State* L) {
 		return 1;
 	}
 
-	uint16_t mountId;
+	uint8_t mountId;
 	if (isNumber(L, 2)) {
-		mountId = getNumber<uint16_t>(L, 2);
+		mountId = getNumber<uint8_t>(L, 2);
 	}
 	else {
 		Mount* mount = g_game.mounts.getMountByName(getString(L, 2));
@@ -10622,9 +10159,9 @@ int LuaScriptInterface::luaPlayerRemoveMount(lua_State* L) {
 		return 1;
 	}
 
-	uint16_t mountId;
+	uint8_t mountId;
 	if (isNumber(L, 2)) {
-		mountId = getNumber<uint16_t>(L, 2);
+		mountId = getNumber<uint8_t>(L, 2);
 	}
 	else {
 		Mount* mount = g_game.mounts.getMountByName(getString(L, 2));
@@ -10648,7 +10185,7 @@ int LuaScriptInterface::luaPlayerHasMount(lua_State* L) {
 
 	Mount* mount = nullptr;
 	if (isNumber(L, 2)) {
-		mount = g_game.mounts.getMountByID(getNumber<uint16_t>(L, 2));
+		mount = g_game.mounts.getMountByID(getNumber<uint8_t>(L, 2));
 	}
 	else {
 		mount = g_game.mounts.getMountByName(getString(L, 2));
@@ -11208,33 +10745,6 @@ int LuaScriptInterface::luaPlayerResetIdleTime(lua_State* L)
 	}
 
 	player->resetIdleTime();
-	pushBoolean(L, true);
-	return 1;
-}
-
-int LuaScriptInterface::luaPlayerIsNearDepotBox(lua_State* L)
-{
-	// player:isNearDepotBox()
-	const Player* const player = getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	pushBoolean(L, player->isNearDepotBox());
-	return 1;
-}
-
-int LuaScriptInterface::luaPlayerOpenMarket(lua_State* L)
-{
-	// player:openMarket()
-	Player* player = getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	player->sendMarketEnter();
 	pushBoolean(L, true);
 	return 1;
 }
@@ -13187,6 +12697,18 @@ int LuaScriptInterface::luaItemTypeGetTier(lua_State* L)
 	return 1;
 }
 
+int LuaScriptInterface::luaItemTypeGetImbuementSlots(lua_State* L)
+{
+	// itemType:getImbuementSlots()
+	const ItemType* itemType = getUserdata<const ItemType>(L, 1);
+	if (itemType) {
+		lua_pushnumber(L, itemType->imbuementslots);
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
 int LuaScriptInterface::luaItemTypeGetDefense(lua_State* L)
 {
 	// itemType:getDefense()
@@ -13242,19 +12764,6 @@ int LuaScriptInterface::luaItemTypeGetAmmoType(lua_State* L)
 	if (itemType) {
 		lua_pushnumber(L, itemType->ammoType);
 	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int LuaScriptInterface::luaItemTypeGetShootType(lua_State* L)
-{
-	// itemType:getShootType()
-	const ItemType* itemType = getUserdata<const ItemType>(L, 1);
-	if (itemType) {
-		lua_pushnumber(L, itemType->shootType);
-	}
-	else {
 		lua_pushnil(L);
 	}
 	return 1;
@@ -14056,7 +13565,7 @@ int LuaScriptInterface::luaConditionSetFormula(lua_State* L)
 int LuaScriptInterface::luaConditionSetOutfit(lua_State* L)
 {
 	// condition:setOutfit(outfit)
-	// condition:setOutfit(lookTypeEx, lookType, lookHead, lookBody, lookLegs, lookFeet[, lookAddons]])
+	// condition:setOutfit(lookTypeEx, lookType, lookHead, lookBody, lookLegs, lookFeet[, lookAddons[, lookMount]])
 	Outfit_t outfit;
 	if (isTable(L, 2)) {
 		outfit = getOutfit(L, 2);
@@ -17050,7 +16559,7 @@ int LuaScriptInterface::luaTalkactionSeparator(lua_State* L)
 	// talkAction:separator(sep)
 	TalkAction* talk = getUserdata<TalkAction>(L, 1);
 	if (talk) {
-		talk->setSeparator(getString(L, 2));
+		talk->setSeparator(getString(L, 2).c_str());
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
@@ -17238,16 +16747,9 @@ int LuaScriptInterface::luaMoveEventRegister(lua_State* L)
 	MoveEvent* moveevent = getUserdata<MoveEvent>(L, 1);
 	if (moveevent) {
 		if ((moveevent->getEventType() == MOVE_EVENT_EQUIP || moveevent->getEventType() == MOVE_EVENT_DEEQUIP) && moveevent->getSlot() == SLOTP_WHEREEVER) {
-			std::vector<uint16_t> slots;
-			for (const auto id : moveevent->getItemIdRange()) {
-				ItemType& it = Item::items.getItemType(id);
-				uint16_t itemSlot = it.slotPosition;
-
-				if (std::find(slots.begin(), slots.end(), itemSlot) != slots.end()) {
-					moveevent->setSlot(itemSlot);
-					slots.push_back(itemSlot);
-				}
-			}
+			uint32_t id = moveevent->getItemIdRange().at(0);
+			ItemType& it = Item::items.getItemType(id);
+			moveevent->setSlot(it.slotPosition);
 		}
 		if (!moveevent->isScripted()) {
 			pushBoolean(L, g_moveEvents->registerLuaFunction(moveevent));
