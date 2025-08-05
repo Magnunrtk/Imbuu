@@ -1,0 +1,201 @@
+/* Reset de estilos globais */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Container principal */
+.main-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+/* Título das seções */
+.section-title {
+    font-size: 1.75rem;
+    color: #333;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+/* Seções de funcionários ativos e folha de pagamento */
+.active-employees-section,
+.payroll-section {
+    margin-bottom: 40px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Container da taxa por hora */
+.hourly-rate-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.hourly-rate-label {
+    font-size: 1rem;
+    margin-right: 10px;
+}
+
+.hourly-rate-input {
+    width: 150px;
+    padding: 5px 10px;
+    font-size: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+/* Tabela de funcionários */
+.employee-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 1rem;
+}
+
+.employee-table th,
+.employee-table td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+.employee-table th {
+    background-color: #233558;
+    color: #fff;
+}
+
+.employee-table td {
+    background-color: #fff;
+}
+
+/* Estilização para linhas alternadas na tabela */
+.employee-table tr:nth-child(2n) td {
+    background-color: #f9f9f9;
+}
+
+/* Efeito hover nas linhas da tabela */
+.employee-table tr:hover td {
+    background-color: #eaeaea;
+}
+
+/* Indicador de status do funcionário */
+.status-dot {
+    height: 10px;
+    width: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+/* Status online */
+.online {
+    background-color: #28a745;
+}
+
+/* Coluna de comprovantes na tabela */
+.employee-table td.comprovante-column,
+.employee-table th.comprovante-column {
+    text-align: center;
+}
+
+/* Input de upload de comprovante */
+.comprovante-input {
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+/* Botão para visualizar comprovante */
+.view-comprovante-btn {
+    background-color: #28a745;
+    color: #fff;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 5px;
+}
+
+.view-comprovante-btn:hover {
+    background-color: #218838;
+}
+
+/* Pré-visualização de comprovante */
+.comprovante-preview {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.comprovante-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    margin-top: 10px;
+}
+
+.comprovante-preview iframe {
+    width: 100%;
+    height: 300px;
+    border: none;
+}
+
+/* Container da pré-visualização do comprovante */
+.comprovante-preview-container {
+    display: none;
+    margin-top: 10px;
+}
+
+/* Nome destacado */
+.highlighted-name {
+    font-weight: 700;
+    color: #ff5733;
+    font-size: 1.5rem;
+}
+
+/* Seção do chefe */
+.boss-section {
+    margin-bottom: 30px;
+}
+
+.boss-title {
+    font-size: 2rem;
+    color: #233558;
+}
+
+/* Aba de navegação */
+.tabs {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+/* Botões das abas */
+.tab-button {
+    padding: 10px 20px;
+    margin-right: 1px;
+    border: none;
+    background-color: #ddd;
+    cursor: pointer;
+}
+
+.tab-button.active {
+    background-color: #4caf50;
+    color: #fff;
+}
+
+/* Conteúdo das abas */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}

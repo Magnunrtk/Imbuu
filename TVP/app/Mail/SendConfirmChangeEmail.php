@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Mail;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
+
+class SendConfirmChangeEmail extends Mailable
+{
+    use Queueable, SerializesModels;
+    public array $mailDetails;
+    /**
+     * Create a new message instance.
+     *
+     * @return void
+     */
+    public function __construct($mailDetails)
+    {
+        $this->mailDetails = $mailDetails;
+    }
+    /**
+     * Build the message.
+     *
+     * @return $this
+     */
+    public function build()
+    {
+        return $this->view('email.template.confirm_change_email')
+            ->from('no-reply@ravenor.online', 'Ravenor')
+            ->subject('Password Change to Change Your ' . config('server.serverName') . ' Account\'s Email')
+            ->with('mailDetails', $this->mailDetails);
+    }
+}
